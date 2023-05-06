@@ -1,10 +1,12 @@
 using Amazon.CDK;
 using Amazon.CDK.AWS.APIGateway;
 using Amazon.CDK.AWS.Cognito;
+using Amazon.CDK.AWS.IAM;
 using Amazon.CDK.AWS.Lambda;
 using Amazon.CDK.AWS.Lambda.EventSources;
 using Amazon.CDK.AWS.S3;
 using Amazon.CDK.AWS.SAM;
+using Amazon.CDK.AWS.SSM;
 using Constructs;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
@@ -16,6 +18,7 @@ namespace RolyAuth
         internal RolyAuthStack(Construct scope, string id, IStackProps props = null) : base(scope, id, props)
         {
             string infraPrefix = "RolyApps-Auth";
+            string infraSsmPrefix = "/rolyapps-auth";
 
             // Cognito user pool
             var userPool = new UserPool(this, $"{infraPrefix}-CognitoPool", new UserPoolProps
@@ -63,6 +66,20 @@ namespace RolyAuth
                 }
             });
 
+            var userPoolIdSsm = new StringParameter(this, $"{infraPrefix}-userPoolIdSsm-ssm", new StringParameterProps()
+            {
+                Description = "Cognito User Pool Id",
+                ParameterName = $"{infraSsmPrefix}/cognitoPoolId",
+                StringValue = userPool.UserPoolId
+            });
+
+            var userPoolClientId = new StringParameter(this, $"{infraPrefix}-userPoolClientId-ssm", new StringParameterProps()
+            {
+                Description = "Cognito User Pool Id",
+                ParameterName = $"{infraSsmPrefix}/userPoolClientId",
+                StringValue = cognitoAppClient.UserPoolClientId
+            });
+
             //var authLambdaFunc = new Function(this, $"{infraPrefix}-AuthLambdaFunc", new FunctionProps
             //{
             //    Runtime = Runtime.DOTNET_6,
@@ -86,6 +103,21 @@ namespace RolyAuth
                 Code = Code.FromAsset("./src/dist/backendFunction.zip"),
                 MemorySize = 1024
             });
+
+            backendLambdaFunc.AddToRolePolicy(new PolicyStatement(new PolicyStatementProps()
+            {
+                Actions = new[] {
+                    "ssm:GetParameter",
+                    "ssm:GetParametersByPath",
+                    "dynamodb:DescribeTable",
+                    "dynamodb:Query",
+                    "dynamodb:DeleteItem",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem"
+                },
+                Resources = new[] { "*" },
+                Effect = Effect.ALLOW
+            }));
 
             //var tokenAuthorizer = new TokenAuthorizer(this, "LambdaTokenAuthorizer", new TokenAuthorizerProps
             //{
