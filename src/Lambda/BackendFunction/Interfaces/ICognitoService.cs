@@ -1,4 +1,5 @@
 ﻿using Amazon.Lambda.APIGatewayEvents;
+using ApiFunction.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,8 +8,8 @@ using System.Threading.Tasks;
 
 namespace ApiFunction.Interfaces
 {
-    public interface ILambdaEntryPoint
+    public interface ICognitoService
     {
-        Task<APIGatewayProxyResponse> RegisterUser(APIGatewayProxyRequest request);
+        Task<APIGatewayProxyResponse> RegisterUser(APIGatewayProxyRequest apiRequest);
     }
 }

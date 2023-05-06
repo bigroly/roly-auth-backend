@@ -30,45 +30,20 @@ namespace Lambda.ApiFunction
         /// <param name="request"></param>
         /// <param name="context"></param>
         /// <returns>APIGatewayProxyResponse</returns>
-        public APIGatewayProxyResponse FunctionHandler(APIGatewayProxyRequest request, ILambdaContext context)
+        public async Task<APIGatewayProxyResponse> FunctionHandler(APIGatewayProxyRequest request, ILambdaContext context)
         {
-            switch (request.Path)
+            if(request.Path == "/account/register" && request.HttpMethod.ToLower() == "post")
             {
-                default:
-                    Console.WriteLine(request.Path);
-                    return new APIGatewayProxyResponse
-                    {
-                        StatusCode = (int)HttpStatusCode.OK,
-                        Body = "Unknown endpoint",
-                        Headers = new Dictionary<string, string> { { "Content-Type", "text/plain" } }
-                    };
+                var response = await _lambdaEntryPoint.RegisterUser(request);
+                return response;
             }
-            
 
-            //switch (request.HttpMethod.ToUpper())
-            //{
-            //  case "GET":
-            //    return new APIGatewayProxyResponse
-            //    {
-            //      StatusCode = (int)HttpStatusCode.OK,
-            //      Body = "Hello",
-            //      Headers = new Dictionary<string, string> { { "Content-Type", "text/plain" } }
-            //    };
-            //  case "POST":
-            //    return new APIGatewayProxyResponse
-            //    {
-            //      StatusCode = (int)HttpStatusCode.Created,
-            //      Body = "Created",
-            //      Headers = new Dictionary<string, string> { { "Content-Type", "text/plain" } }
-            //    };
-            //  default:
-            //    return new APIGatewayProxyResponse
-            //    {
-            //      StatusCode = (int)HttpStatusCode.BadRequest,
-            //      Body = "Invalid HttpMethod",
-            //      Headers = new Dictionary<string, string> { { "Content-Type", "text/plain" } }
-            //    };
-            //}
+            return new APIGatewayProxyResponse
+            {
+                StatusCode = (int)HttpStatusCode.BadRequest,
+                Body = "Unknown endpoint or method",
+                Headers = new Dictionary<string, string> { { "Content-Type", "text/plain" } }
+            };
         }
     }
 }

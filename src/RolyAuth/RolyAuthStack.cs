@@ -21,9 +21,10 @@ namespace RolyAuth
             string infraSsmPrefix = "/rolyapps-auth";
 
             // Cognito user pool
-            var userPool = new UserPool(this, $"{infraPrefix}-CognitoPool", new UserPoolProps
+            string poolName = $"{infraPrefix}-CognitoPool";
+            var userPool = new UserPool(this, poolName, new UserPoolProps
             {
-                UserPoolName = "CognitoUserPool",
+                UserPoolName = poolName,
                 RemovalPolicy = RemovalPolicy.DESTROY,
                 SignInAliases = new SignInAliases
                 {
@@ -66,20 +67,6 @@ namespace RolyAuth
                 }
             });
 
-            var userPoolIdSsm = new StringParameter(this, $"{infraPrefix}-userPoolIdSsm-ssm", new StringParameterProps()
-            {
-                Description = "Cognito User Pool Id",
-                ParameterName = $"{infraSsmPrefix}/cognitoPoolId",
-                StringValue = userPool.UserPoolId
-            });
-
-            var userPoolClientId = new StringParameter(this, $"{infraPrefix}-userPoolClientId-ssm", new StringParameterProps()
-            {
-                Description = "Cognito User Pool Id",
-                ParameterName = $"{infraSsmPrefix}/userPoolClientId",
-                StringValue = cognitoAppClient.UserPoolClientId
-            });
-
             //var authLambdaFunc = new Function(this, $"{infraPrefix}-AuthLambdaFunc", new FunctionProps
             //{
             //    Runtime = Runtime.DOTNET_6,
@@ -113,7 +100,10 @@ namespace RolyAuth
                     "dynamodb:Query",
                     "dynamodb:DeleteItem",
                     "dynamodb:PutItem",
-                    "dynamodb:UpdateItem"
+                    "dynamodb:UpdateItem",
+                    "cognito-idp:AdminCreateUser",
+                    "cognito-idp:AdminEnableUser",
+                    "cognito-idp:AdminSetUserPassword"
                 },
                 Resources = new[] { "*" },
                 Effect = Effect.ALLOW
@@ -149,12 +139,48 @@ namespace RolyAuth
             // API Methods
 
             // Auth endpoints
-            var authController = apiGateway.Root.AddResource("auth");
+            var authController = apiGateway.Root.AddResource("account");
+            
+            var registerEndpoint = authController.AddResource("register");
+            registerEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
+
             var loginEndpoint = authController.AddResource("login");
             loginEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
 
-            var TestController = apiGateway.Root.AddResource("test");
-            TestController.AddMethod("GET", new LambdaIntegration(backendLambdaFunc), authorizedMethodOptions);
+
+
+            var AppsController = apiGateway.Root.AddResource("apps");
+            AppsController.AddMethod("GET", new LambdaIntegration(backendLambdaFunc), authorizedMethodOptions);
+
+
+            // Output information to SSM
+            var userPoolIdSsm = new StringParameter(this, $"{infraPrefix}-userPoolIdSsm-ssm", new StringParameterProps()
+            {
+                Description = "Cognito User Pool Id",
+                ParameterName = $"{infraSsmPrefix}/cognitoPoolId",
+                StringValue = userPool.UserPoolId
+            });
+
+            var userPoolClientNameSsm = new StringParameter(this, $"{infraPrefix}-userPoolClientName-ssm", new StringParameterProps()
+            {
+                Description = "Cognito User Pool Client Name",
+                ParameterName = $"{infraSsmPrefix}/userPoolClientName",
+                StringValue = cognitoAppClient.UserPoolClientName
+            });
+
+            var userPoolClientIdSsm = new StringParameter(this, $"{infraPrefix}-userPoolClientId-ssm", new StringParameterProps()
+            {
+                Description = "Cognito User Pool Client Id",
+                ParameterName = $"{infraSsmPrefix}/userPoolClientId",
+                StringValue = cognitoAppClient.UserPoolClientId
+            });
+
+            var apiGatewayUrlSsm = new StringParameter(this, $"{infraPrefix}-apiGatewayUrl-ssm", new StringParameterProps()
+            {
+                Description = "Auth API Gateway Url",
+                ParameterName = $"{infraSsmPrefix}/apiGatewayUrl",
+                StringValue = apiGateway.Url
+            });
         }
     }
 }
