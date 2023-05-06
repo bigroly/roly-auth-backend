@@ -21,6 +21,10 @@ namespace Lambda.ApiFunction
     /// <returns>APIGatewayProxyResponse</returns>
     public APIGatewayProxyResponse FunctionHandler(APIGatewayProxyRequest request, ILambdaContext context)
     {
+            switch (request.Path) {
+
+            }
+                
 
             Console.WriteLine(request.Path);
             return new APIGatewayProxyResponse

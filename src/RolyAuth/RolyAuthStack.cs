@@ -82,7 +82,7 @@ namespace RolyAuth
             var backendLambdaFunc = new Function(this, $"{infraPrefix}-BackendLambdaFunc", new FunctionProps
             {
                 Runtime = Runtime.DOTNET_6,
-                Handler = "BackendFunction::Lambda.BackendFunction.Function::FunctionHandler",
+                Handler = "ApiFunction::Lambda.ApiFunction.Function::FunctionHandler",
                 Code = Code.FromAsset("./src/dist/backendFunction.zip"),
                 MemorySize = 1024
             });
