@@ -5,10 +5,11 @@
     "dotnet lambda help",
     "All the command line options for the Lambda command can be specified in this file."
   ],
-  "profile": "CT-AU-DEV-Admin",
-  "region": "ap-southeast-2",
+  "profile": "",
+  "region": "",
   "configuration": "Release",
-  "s3-prefix": "RolyAuth.API/",
-  "template": "serverless.template",
-  "template-parameters": ""
+  "function-runtime": "dotnet6",
+  "function-memory-size": 256,
+  "function-timeout": 60,
+  "function-handler": "AuthFunction::Lambda.AuthFunction.Function::FunctionHandler"
 }

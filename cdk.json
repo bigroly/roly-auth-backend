@@ -1,5 +1,5 @@
 {
-  "app": "dotnet run --project src/RolyAuth/RolyAuth.csproj",
+  "app": "dotnet run --project src/RolyAuth/RolyAuthCdk.csproj",
   "watch": {
     "include": [
       "**"
