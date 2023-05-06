@@ -38,6 +38,12 @@ namespace Lambda.ApiFunction
                 return response;
             }
 
+            if(request.Path == "/account/login" && request.HttpMethod.ToLower() == "post")
+            {
+                var response = await _lambdaEntryPoint.LoginWithUsernamePassword(request);
+                return response;
+            }
+
             return new APIGatewayProxyResponse
             {
                 StatusCode = (int)HttpStatusCode.BadRequest,

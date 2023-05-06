@@ -54,7 +54,8 @@ namespace RolyAuth
                 AuthFlows = new AuthFlow
                 {
                     UserPassword = true,
-                    UserSrp = true
+                    UserSrp = true,
+                    AdminUserPassword = true,
                 },
                 OAuth = new OAuthSettings
                 {
@@ -66,21 +67,6 @@ namespace RolyAuth
                     Scopes = new[] { OAuthScope.EMAIL, OAuthScope.OPENID }
                 }
             });
-
-            //var authLambdaFunc = new Function(this, $"{infraPrefix}-AuthLambdaFunc", new FunctionProps
-            //{
-            //    Runtime = Runtime.DOTNET_6,
-            //    Handler = "AuthFunction::Lambda.AuthFunction.Function::FunctionHandler",
-            //    Code = Code.FromAsset("/dist/AuthFunction"),
-            //    Environment = new Dictionary<string, string>
-            //    {
-            //        {"REGION", this.Region},
-            //        {"COGNITO_USER_POOL_ID", userPool.UserPoolId},
-            //        {"CLIENT_ID", cognitoAppClient.UserPoolClientId}
-            //    },
-            //    Timeout = Duration.Minutes(1),
-            //    MemorySize = 256
-            //});
 
             // API Lambda definition
             var backendLambdaFunc = new Function(this, $"{infraPrefix}-BackendLambdaFunc", new FunctionProps
@@ -103,18 +89,12 @@ namespace RolyAuth
                     "dynamodb:UpdateItem",
                     "cognito-idp:AdminCreateUser",
                     "cognito-idp:AdminEnableUser",
-                    "cognito-idp:AdminSetUserPassword"
+                    "cognito-idp:AdminSetUserPassword",
+                    "cognito-idp:AdminInitiateAuth"
                 },
                 Resources = new[] { "*" },
                 Effect = Effect.ALLOW
             }));
-
-            //var tokenAuthorizer = new TokenAuthorizer(this, "LambdaTokenAuthorizer", new TokenAuthorizerProps
-            //{
-            //    Handler = authLambdaFunc,
-            //    IdentitySource = "method.request.header.authorization",
-            //    ResultsCacheTtl = Duration.Seconds(0)
-            //});
 
             // APIGateway 
             string apiName = $"{infraPrefix}-ApiGateway";
@@ -140,14 +120,10 @@ namespace RolyAuth
 
             // Auth endpoints
             var authController = apiGateway.Root.AddResource("account");
-            
             var registerEndpoint = authController.AddResource("register");
             registerEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
-
             var loginEndpoint = authController.AddResource("login");
             loginEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
-
-
 
             var AppsController = apiGateway.Root.AddResource("apps");
             AppsController.AddMethod("GET", new LambdaIntegration(backendLambdaFunc), authorizedMethodOptions);

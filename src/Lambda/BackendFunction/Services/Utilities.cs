@@ -38,7 +38,7 @@ namespace ApiFunction.Services
             {
                 StatusCode = (int)HttpStatusCode.OK,
                 Body = bodySerialized,
-                Headers = new Dictionary<string, string> { { "Content-Type", string.IsNullOrEmpty(contentType) ? contentType : "text/plain" } }
+                Headers = new Dictionary<string, string> { { "Content-Type", string.IsNullOrEmpty(contentType) ? "text/plain" : contentType } }
             };
         }
     }

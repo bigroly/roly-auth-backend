@@ -10,5 +10,6 @@ namespace ApiFunction.Interfaces
     public interface ILambdaEntryPoint
     {
         Task<APIGatewayProxyResponse> RegisterUser(APIGatewayProxyRequest request);
+        Task<APIGatewayProxyResponse> LoginWithUsernamePassword(APIGatewayProxyRequest request);
     }
 }

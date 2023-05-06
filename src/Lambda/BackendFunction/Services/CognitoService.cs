@@ -2,6 +2,7 @@
 using Amazon.CognitoIdentityProvider.Model;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Runtime.Internal;
+using Amazon.Runtime.Internal.Transform;
 using Amazon.Runtime.Internal.Util;
 using ApiFunction.Interfaces;
 using ApiFunction.Models;
@@ -105,11 +106,71 @@ namespace ApiFunction.Services
             }
             catch(Exception ex)
             {
-                _logger.LogError($"Error setting pw for User with username: [{requestBody.Username}]", ex);
+                _logger.LogError(ex, $"Error setting pw for User with username: [{requestBody.Username}]");
                 return _utils.ServerError("Sorry, something went wrong creating your account. We'll look into it.");
             }
 
             return _utils.Ok(null, null);
+        }
+
+        public async Task<APIGatewayProxyResponse> LoginWithUsernamePassword(APIGatewayProxyRequest apiRequest)
+        {
+            LoginRequest requestBody;
+            try
+            {
+                requestBody = JsonConvert.DeserializeObject<LoginRequest>(apiRequest.Body);
+            }
+            catch (Exception ex)
+            {
+                return _utils.BadRequest("Sorry, there was a problem validating the request. Please check parameters and try again.");
+            }
+
+            if (string.IsNullOrEmpty(requestBody.Username) || string.IsNullOrEmpty(requestBody.Password))
+            {
+                return _utils.BadRequest("Username or Password missing in request. Please check parameters and try again.");
+            }
+
+            var authReq = new AdminInitiateAuthRequest
+            {
+                UserPoolId = _config.GetValue<string>("cognitoPoolId"),
+                ClientId = _config.GetValue<string>("userPoolClientId"),
+                AuthFlow = AuthFlowType.ADMIN_NO_SRP_AUTH,
+                AuthParameters = new Dictionary<string, string>
+                {
+                    { "USERNAME", requestBody.Username },
+                    { "PASSWORD", requestBody.Password }
+                }
+            };
+
+            try
+            {
+                var idpResponse = await _cognitoIdp.AdminInitiateAuthAsync(authReq);
+                var clientResponse = new LoginResponse
+                {
+                    AccessToken = idpResponse.AuthenticationResult.AccessToken,
+                    Expiry = idpResponse.AuthenticationResult.ExpiresIn,
+                    RefreshToken = idpResponse.AuthenticationResult.RefreshToken
+                };
+                return _utils.Ok(JsonConvert.SerializeObject(clientResponse), "application/json");
+            }
+            catch (UserNotFoundException e)
+            {
+                return _utils.BadRequest("Sorry, your username or password is incorrect.");
+            }
+            catch (PasswordResetRequiredException e)
+            {
+                return _utils.BadRequest("Sorry, this account is currently locked and requires a password reset.");
+            }
+            catch (NotAuthorizedException e)
+            {
+                return _utils.BadRequest("Sorry, your username or password is incorrect.");
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Exception encountered in POST to /api/auth/login");
+                return _utils.ServerError("Sorry, something went wrong logging you in. We'll look into it.");
+            }
+
         }
 
         private bool PasswordValid(string password)
