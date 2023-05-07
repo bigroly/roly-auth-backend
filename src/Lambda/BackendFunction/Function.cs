@@ -6,6 +6,8 @@ using System;
 using ApiFunction.Interfaces;
 using ApiFunction;
 using Microsoft.Extensions.DependencyInjection;
+using Amazon.Runtime.Internal.Util;
+using Microsoft.Extensions.Logging;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
@@ -16,12 +18,14 @@ namespace Lambda.ApiFunction
     public class Function
     {
         private readonly ILambdaEntryPoint _lambdaEntryPoint;
+        private readonly ILogger<Function> _logger;
 
         public Function()
         {
             var startup = new Startup();
             IServiceProvider provider = startup.ConfigureServices();
             _lambdaEntryPoint = provider.GetRequiredService<ILambdaEntryPoint>();
+            _logger = provider.GetRequiredService<ILogger<Function>>();
         }
 
         /// <summary>
@@ -33,17 +37,15 @@ namespace Lambda.ApiFunction
         public async Task<APIGatewayProxyResponse> FunctionHandler(APIGatewayProxyRequest request, ILambdaContext context)
         {
             if(request.Path == "/account/register" && request.HttpMethod.ToLower() == "post")
-            {
-                var response = await _lambdaEntryPoint.RegisterUser(request);
-                return response;
-            }
+                return await _lambdaEntryPoint.RegisterUser(request);
 
-            if(request.Path == "/account/login" && request.HttpMethod.ToLower() == "post")
-            {
-                var response = await _lambdaEntryPoint.LoginWithUsernamePassword(request);
-                return response;
-            }
+            if (request.Path == "/account/login" && request.HttpMethod.ToLower() == "post")
+                return await _lambdaEntryPoint.LoginWithUsernamePassword(request);
 
+            if (request.Path == "/apps" && request.HttpMethod.ToLower() == "get")
+                return _lambdaEntryPoint.GetApps();
+
+            _logger.LogError($"Received request for unknown resource Path:[{request.Path}], Method:[{request.HttpMethod}]");
             return new APIGatewayProxyResponse
             {
                 StatusCode = (int)HttpStatusCode.BadRequest,

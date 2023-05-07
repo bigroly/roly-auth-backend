@@ -14,10 +14,12 @@ namespace ApiFunction
     public class LambdaEntryPoint: ILambdaEntryPoint
     {
         private readonly ICognitoService _cognitoService;
+        private readonly IAppsService _appsService;
 
-        public LambdaEntryPoint(ICognitoService cognitoService)
+        public LambdaEntryPoint(ICognitoService cognitoService, IAppsService appsService)
         {
             _cognitoService = cognitoService;
+            _appsService = appsService;
         }
 
         public async Task<APIGatewayProxyResponse> RegisterUser(APIGatewayProxyRequest request)
@@ -28,6 +30,11 @@ namespace ApiFunction
         public async Task<APIGatewayProxyResponse> LoginWithUsernamePassword(APIGatewayProxyRequest request)
         {
             return await _cognitoService.LoginWithUsernamePassword(request);
+        }
+
+        public APIGatewayProxyResponse GetApps()
+        {
+            return _appsService.GetApplications();
         }
     }
 }

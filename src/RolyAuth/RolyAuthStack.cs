@@ -110,9 +110,10 @@ namespace RolyAuth
                 }
             });
 
+            var cognitoAuthorizer = new CognitoUserPoolsAuthorizer(this, $"{infraPrefix}-CognitoPoolsAuthorizer", new CognitoUserPoolsAuthorizerProps { CognitoUserPools = new[] { userPool } });
             var authorizedMethodOptions = new MethodOptions
             {
-                Authorizer = new CognitoUserPoolsAuthorizer(this, $"{infraPrefix}-CognitoPoolsAuthorizer", new CognitoUserPoolsAuthorizerProps { CognitoUserPools = new[] { userPool } }),
+                Authorizer = cognitoAuthorizer,
                 AuthorizationType = AuthorizationType.COGNITO
             };
 
@@ -157,6 +158,13 @@ namespace RolyAuth
                 ParameterName = $"{infraSsmPrefix}/apiGatewayUrl",
                 StringValue = apiGateway.Url
             });
+            var apiGatewayUrlForAmplifySsm = new StringParameter(this, "/amplify/d1h0z6sgqzt3fn/master/apiGatewayUrl-ssm", new StringParameterProps()
+            {
+                Description = "Auth API Gateway Url (for amplify to access)",
+                ParameterName = "/amplify/d1h0z6sgqzt3fn/master/apiGatewayUrl",
+                StringValue = apiGateway.Url
+            });
+            
         }
     }
 }
