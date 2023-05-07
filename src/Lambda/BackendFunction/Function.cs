@@ -45,6 +45,9 @@ namespace Lambda.ApiFunction
             if (request.Path == "/account/forgotPassword" && request.HttpMethod.ToLower() == "post")
                 return await _lambdaEntryPoint.BeginPasswordReset(request);
 
+            if (request.Path == "/account/resetPassword" && request.HttpMethod.ToLower() == "post")
+                return await _lambdaEntryPoint.ConfirmPasswordReset(request);
+
             if (request.Path == "/apps" && request.HttpMethod.ToLower() == "get")
                 return _lambdaEntryPoint.GetApps();
 

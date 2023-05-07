@@ -39,16 +39,16 @@ namespace ApiFunction.Services
             if (string.IsNullOrEmpty(request.Email))
             {
                 return _utils.BadRequest("Email address missing from request. Please provide this and try agin.");
-            }
-
-            ForgotPasswordRequest idpRequest = new ForgotPasswordRequest()
-            {
-                ClientId = _config.GetValue<string>("userPoolClientId"),
-                Username = request.Email
-            };
+            }            
 
             try
             {
+                ForgotPasswordRequest idpRequest = new ForgotPasswordRequest()
+                {
+                    ClientId = _config.GetValue<string>("userPoolClientId"),
+                    Username = request.Email
+                };
+
                 var idpResponse = await _cognitoIdp.ForgotPasswordAsync(idpRequest);
                 return _utils.Ok(null, null);
             }
@@ -59,9 +59,47 @@ namespace ApiFunction.Services
             }           
         }
 
-        //public async Task<APIGatewayProxyResponse> ConfirmAndResetPassword(APIGatewayProxyRequest apiRequest)
-        //{
+        public async Task<APIGatewayProxyResponse> ConfirmAndResetPassword(APIGatewayProxyRequest apiRequest)
+        {
+            ConfirmPasswordResetRequest request;
+            try
+            {
+                request = JsonConvert.DeserializeObject<ConfirmPasswordResetRequest>(apiRequest.Body);
+            }
+            catch (Exception ex)
+            {
+                return _utils.BadRequest("Sorry, there was a problem validating the request. Please check parameters and try again.");
+            }
 
-        //}
+            if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.ConfirmationCode) || string.IsNullOrEmpty(request.NewPassword))
+            {
+                return _utils.BadRequest("Email, Confirmation Code or New Password missing from request. Please provide this and try agin.");
+            }
+
+            try
+            {
+                ConfirmForgotPasswordRequest idpRequest = new ConfirmForgotPasswordRequest
+                {
+                    ClientId = _config.GetValue<string>("userPoolClientId"),
+                    Username = request.Email,
+                    Password = request.NewPassword,
+                    ConfirmationCode = request.ConfirmationCode
+                };
+
+                var idpResponse = await _cognitoIdp.ConfirmForgotPasswordAsync(idpRequest);
+
+                if(idpResponse.HttpStatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    return _utils.BadRequest("There was an issue with the provided password or reset code. Please check these and try again");
+                }
+
+                return _utils.Ok(null, null);               
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, $"Error calling Cognito ConfirmForgotPasswordAsync for user with email:[{request.Email}]");
+                return _utils.BadRequest(ex.Message);
+            }
+        }
     }
 }

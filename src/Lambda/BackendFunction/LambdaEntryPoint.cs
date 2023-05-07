@@ -43,5 +43,10 @@ namespace ApiFunction
         {
             return await _passwordRecoveryService.BeginPasswordRecovery(request);
         }
+
+        public async Task<APIGatewayProxyResponse> ConfirmPasswordReset(APIGatewayProxyRequest request)
+        {
+            return await _passwordRecoveryService.ConfirmAndResetPassword(request);
+        }
     }
 }

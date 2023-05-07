@@ -10,5 +10,6 @@ namespace ApiFunction.Interfaces
     public interface IPasswordRecoveryService
     {
         Task<APIGatewayProxyResponse> BeginPasswordRecovery(APIGatewayProxyRequest apiRequest);
+        Task<APIGatewayProxyResponse> ConfirmAndResetPassword(APIGatewayProxyRequest apiRequest);
     }
 }

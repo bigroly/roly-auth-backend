@@ -43,7 +43,7 @@ namespace RolyAuth
             });
 
             // Cognito App Client
-            // todo - get this from SSM
+            // todo - get this from SSM?
             string[] CallbackUrls = new string[] { "http://localhost" };
             var cognitoAppClient = new UserPoolClient(this, "{infraPrefix}-CognitoClient", new UserPoolClientProps
             {
@@ -129,7 +129,10 @@ namespace RolyAuth
             loginEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
             var beginPwResetEndpoint = authController.AddResource("forgotPassword");
             beginPwResetEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
+            var confirmPwResetEndpoint = authController.AddResource("resetPassword");
+            confirmPwResetEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
 
+            // Apps endpoints
             var AppsController = apiGateway.Root.AddResource("apps");
             AppsController.AddMethod("GET", new LambdaIntegration(backendLambdaFunc), authorizedMethodOptions);
 
@@ -161,14 +164,7 @@ namespace RolyAuth
                 Description = "Auth API Gateway Url",
                 ParameterName = $"{infraSsmPrefix}/apiGatewayUrl",
                 StringValue = apiGateway.Url
-            });
-            var apiGatewayUrlForAmplifySsm = new StringParameter(this, "/amplify/d1h0z6sgqzt3fn/master/apiGatewayUrl-ssm", new StringParameterProps()
-            {
-                Description = "Auth API Gateway Url (for amplify to access)",
-                ParameterName = "/amplify/d1h0z6sgqzt3fn/master/apiGatewayUrl",
-                StringValue = apiGateway.Url
-            });
-            
+            });            
         }
     }
 }
