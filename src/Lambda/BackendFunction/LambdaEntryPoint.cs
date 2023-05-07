@@ -15,11 +15,13 @@ namespace ApiFunction
     {
         private readonly ICognitoService _cognitoService;
         private readonly IAppsService _appsService;
+        private readonly IPasswordRecoveryService _passwordRecoveryService;
 
-        public LambdaEntryPoint(ICognitoService cognitoService, IAppsService appsService)
+        public LambdaEntryPoint(ICognitoService cognitoService, IAppsService appsService, IPasswordRecoveryService passwordRecoveryService)
         {
             _cognitoService = cognitoService;
             _appsService = appsService;
+            _passwordRecoveryService = passwordRecoveryService;
         }
 
         public async Task<APIGatewayProxyResponse> RegisterUser(APIGatewayProxyRequest request)
@@ -35,6 +37,11 @@ namespace ApiFunction
         public APIGatewayProxyResponse GetApps()
         {
             return _appsService.GetApplications();
+        }
+
+        public async Task<APIGatewayProxyResponse> BeginPasswordReset(APIGatewayProxyRequest request)
+        {
+            return await _passwordRecoveryService.BeginPasswordRecovery(request);
         }
     }
 }

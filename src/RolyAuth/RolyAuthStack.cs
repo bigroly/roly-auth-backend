@@ -30,7 +30,8 @@ namespace RolyAuth
                 {
                     Email = true
                 },
-                SelfSignUpEnabled = false
+                SelfSignUpEnabled = false,
+                AccountRecovery = AccountRecovery.EMAIL_ONLY
             });
 
             // Cognito user group
@@ -90,7 +91,8 @@ namespace RolyAuth
                     "cognito-idp:AdminCreateUser",
                     "cognito-idp:AdminEnableUser",
                     "cognito-idp:AdminSetUserPassword",
-                    "cognito-idp:AdminInitiateAuth"
+                    "cognito-idp:AdminInitiateAuth",
+                    "cognito-idp:ConfirmForgotPassword"
                 },
                 Resources = new[] { "*" },
                 Effect = Effect.ALLOW
@@ -125,6 +127,8 @@ namespace RolyAuth
             registerEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
             var loginEndpoint = authController.AddResource("login");
             loginEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
+            var beginPwResetEndpoint = authController.AddResource("forgotPassword");
+            beginPwResetEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
 
             var AppsController = apiGateway.Root.AddResource("apps");
             AppsController.AddMethod("GET", new LambdaIntegration(backendLambdaFunc), authorizedMethodOptions);

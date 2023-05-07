@@ -72,6 +72,7 @@ namespace ApiFunction
             // Our services
             services.AddSingleton<IUtilities, Utilities>();
             services.AddSingleton<ICognitoService, CognitoService>();
+            services.AddSingleton<IPasswordRecoveryService, PasswordRecoveryService>();
             services.AddSingleton<IAppsService, AppsService>();
         }
     }

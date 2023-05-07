@@ -6,9 +6,8 @@ using System.Threading.Tasks;
 
 namespace ApiFunction.Models
 {
-    public record LoginRequest
+    public record BeginPwResetRequest
     {
         public string Email { get; set; }
-        public string Password { get; set; }
     }
 }

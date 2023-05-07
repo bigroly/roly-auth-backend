@@ -42,8 +42,12 @@ namespace Lambda.ApiFunction
             if (request.Path == "/account/login" && request.HttpMethod.ToLower() == "post")
                 return await _lambdaEntryPoint.LoginWithUsernamePassword(request);
 
+            if (request.Path == "/account/forgotPassword" && request.HttpMethod.ToLower() == "post")
+                return await _lambdaEntryPoint.BeginPasswordReset(request);
+
             if (request.Path == "/apps" && request.HttpMethod.ToLower() == "get")
                 return _lambdaEntryPoint.GetApps();
+
 
             _logger.LogError($"Received request for unknown resource Path:[{request.Path}], Method:[{request.HttpMethod}]");
             return new APIGatewayProxyResponse

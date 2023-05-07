@@ -46,7 +46,7 @@ namespace ApiFunction.Services
                 return _utils.BadRequest("Sorry, there was a problem validating the request. Please check parameters and try again.");
             }
 
-            if (string.IsNullOrEmpty(requestBody.Username) || string.IsNullOrEmpty(requestBody.Password))
+            if (string.IsNullOrEmpty(requestBody.Email) || string.IsNullOrEmpty(requestBody.Password))
             {
                 return _utils.BadRequest("Username or Password missing in request. Please check parameters and try again.");
             }
@@ -59,7 +59,7 @@ namespace ApiFunction.Services
             AdminCreateUserRequest createUserReq = new AdminCreateUserRequest()
             {
                 UserPoolId = _config.GetValue<string>("cognitoPoolId"),
-                Username = requestBody.Username,
+                Username = requestBody.Email,
                 // dumb hack to generate a "different" password to the one that will be set a couple lines down
                 TemporaryPassword = $"{requestBody.Password}&1",
                 UserAttributes = new List<AttributeType>()
@@ -67,7 +67,7 @@ namespace ApiFunction.Services
                     new AttributeType
                     {
                         Name = "email",
-                        Value = requestBody.Username
+                        Value = requestBody.Email
                     },
                     // todo - at some point would be cool to explore email verification
                     new AttributeType
@@ -87,13 +87,13 @@ namespace ApiFunction.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error creating User with username: [{requestBody.Username}] - {ex.Message}", ex);
+                _logger.LogError($"Error creating User with email: [{requestBody.Email}] - {ex.Message}", ex);
                 return _utils.ServerError("Sorry, something went wrong creating your account. We'll look into it.");
             }
 
             AdminSetUserPasswordRequest confirmPw = new AdminSetUserPasswordRequest()
             {
-                Username = requestBody.Username,
+                Username = requestBody.Email,
                 UserPoolId = _config.GetValue<string>("cognitoPoolId"),
                 Password = requestBody.Password,
                 Permanent = true
@@ -106,7 +106,7 @@ namespace ApiFunction.Services
             }
             catch(Exception ex)
             {
-                _logger.LogError(ex, $"Error setting pw for User with username: [{requestBody.Username}]");
+                _logger.LogError(ex, $"Error setting pw for User with email: [{requestBody.Email}]");
                 return _utils.ServerError("Sorry, something went wrong creating your account. We'll look into it.");
             }
 
@@ -125,7 +125,7 @@ namespace ApiFunction.Services
                 return _utils.BadRequest("Sorry, there was a problem validating the request. Please check parameters and try again.");
             }
 
-            if (string.IsNullOrEmpty(requestBody.Username) || string.IsNullOrEmpty(requestBody.Password))
+            if (string.IsNullOrEmpty(requestBody.Email) || string.IsNullOrEmpty(requestBody.Password))
             {
                 return _utils.BadRequest("Username or Password missing in request. Please check parameters and try again.");
             }
@@ -137,7 +137,7 @@ namespace ApiFunction.Services
                 AuthFlow = AuthFlowType.ADMIN_NO_SRP_AUTH,
                 AuthParameters = new Dictionary<string, string>
                 {
-                    { "USERNAME", requestBody.Username },
+                    { "USERNAME", requestBody.Email },
                     { "PASSWORD", requestBody.Password }
                 }
             };
