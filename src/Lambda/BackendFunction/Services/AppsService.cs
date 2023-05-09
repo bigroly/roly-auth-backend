@@ -28,7 +28,7 @@ namespace ApiFunction.Services
                     new ApplicationModel
                     {
                         Name = "CabinConnect",
-                        Description = "This app allows you to configure a list of rooms or beds and set up a booking portal for people you would like to be able to access it (usually as members).",
+                        Description = "*Work in progress* This app allows you to configure a list of rooms or beds and set up a booking portal for people you would like to be able to access it (usually as members).",
                         MatIcon = "single_bed",
                         LoginUrl = "https://cabinconnect.rolyapps.com/login"
                     }

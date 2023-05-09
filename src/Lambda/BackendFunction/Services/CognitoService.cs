@@ -74,6 +74,11 @@ namespace ApiFunction.Services
                     {
                         Name = "email_verified",
                         Value = "True"
+                    },
+                    new AttributeType
+                    {
+                        Name = "custom:name",
+                        Value = requestBody.Name
                     }
                 },
                 DesiredDeliveryMediums = new List<string>() { "EMAIL" },

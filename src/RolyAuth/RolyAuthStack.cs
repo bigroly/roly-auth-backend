@@ -31,7 +31,18 @@ namespace RolyAuth
                     Email = true
                 },
                 SelfSignUpEnabled = false,
-                AccountRecovery = AccountRecovery.EMAIL_ONLY
+                AccountRecovery = AccountRecovery.EMAIL_ONLY,
+                CustomAttributes = new Dictionary<string, ICustomAttribute>
+                {
+                    {
+                        "name", new StringAttribute(new StringAttributeProps { Mutable = true })
+                    }
+                },
+                UserVerification = new UserVerificationConfig { 
+                    EmailSubject = "Your RolyApps Verification Code",
+                    EmailStyle = VerificationEmailStyle.CODE,
+                    EmailBody = "Your RolyApps verification code is {####}. Please enter this code on the website where prompted and do NOT share this code with anyone."
+                }
             });
 
             // Cognito user group
@@ -39,7 +50,7 @@ namespace RolyAuth
             {
                 UserPoolId = userPool.UserPoolId,
                 Description = "Users of Roly Apps",
-                GroupName = "rolyapps-users",
+                GroupName = "rolyapps-users"
             });
 
             // Cognito App Client
