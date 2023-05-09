@@ -11,7 +11,7 @@ dotnet lambda package --configuration Release --framework net6.0 --output-packag
 
 echo Deploying via CDK
 cd ../../../
-cdk deploy
+cdk deploy --require-approval never
 
 echo Solution Deployed
 pause

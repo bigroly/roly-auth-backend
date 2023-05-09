@@ -1,4 +1,5 @@
 
+
 # RolyApps Auth
 A dead simple template for a serverless AWS-based identity service, compromising of:
 
@@ -65,3 +66,7 @@ In my use case, I'm tinkering with this as a central auth portal to other apps I
 This endpoint is protected by Cognito and can only be accessed by applying a valid Bearer token received after logging in. You can check out how a protected endpoint is configured in CDK by taking a look at the `cognitoAuthorizer` construct `within RolyAuthStack.cs`
 
 That's about it at the moment. I hope to have a bit more time to tinker with this template in the future to add a little but more funk to it, hopefully it'll save you a buttload of time if you have a similar use case :)
+
+**Need to nuke it?**
+Run `cdk destroy` at the solution root folder, follow the in-cmd prompts and your stack will be taken down and destroyed.
+**Note**: The CognitoPool in this CDK stack will not be retained if you pull the pin, this means all your user data will be deleted when you destroy the stack.
