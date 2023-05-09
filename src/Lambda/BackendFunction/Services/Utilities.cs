@@ -1,4 +1,5 @@
 ﻿using Amazon.Lambda.APIGatewayEvents;
+using Amazon.Runtime.Internal.Transform;
 using ApiFunction.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -19,7 +20,7 @@ namespace ApiFunction.Services
             {
                 StatusCode = (int)HttpStatusCode.BadRequest,
                 Body = message,
-                Headers = new Dictionary<string, string> { { "Content-Type", "text/plain" } }
+                Headers = new Dictionary<string, string> { { "Content-Type", "application/json" } }
             };
         }
 
@@ -29,7 +30,7 @@ namespace ApiFunction.Services
             {
                 StatusCode = (int)HttpStatusCode.InternalServerError,
                 Body = message,
-                Headers = new Dictionary<string, string> { { "Content-Type", "text/plain" } }
+                Headers = new Dictionary<string, string> { { "Content-Type", "application/json" } }
             };
         }
 
@@ -38,7 +39,11 @@ namespace ApiFunction.Services
             {
                 StatusCode = (int)HttpStatusCode.OK,
                 Body = bodySerialized,
-                Headers = new Dictionary<string, string> { { "Content-Type", string.IsNullOrEmpty(contentType) ? "text/plain" : contentType } }
+                Headers = new Dictionary<string, string> { 
+                    { "Content-Type", string.IsNullOrEmpty(contentType) ? "text/plain" : contentType },
+                    { "Access-Control-Allow-Origin", "*" },
+                    { "Access-Control-Allow-Headers", "*" }
+                }
             };
         }
     }

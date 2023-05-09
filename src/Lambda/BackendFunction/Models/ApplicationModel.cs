@@ -10,6 +10,7 @@ namespace ApiFunction.Models
     {
         public string Name { get; set; }
         public string Description { get; set; }
+        public string MatIcon { get; set; }
         public string LoginUrl { get; set; }
     }
 }

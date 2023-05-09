@@ -121,11 +121,20 @@ namespace RolyAuth
 
             // API Methods
 
+            var openEndpointOptions = new ResourceOptions()
+            {
+                DefaultCorsPreflightOptions = new CorsOptions
+                {
+                    AllowOrigins = new[] { "*" },
+                    AllowHeaders = new[] { "Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key", "X-Amz-Security-Token" }
+                }
+            };
+
             // Auth endpoints
             var authController = apiGateway.Root.AddResource("account");
             var registerEndpoint = authController.AddResource("register");
             registerEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
-            var loginEndpoint = authController.AddResource("login");
+            var loginEndpoint = authController.AddResource("login", openEndpointOptions);
             loginEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
             var beginPwResetEndpoint = authController.AddResource("forgotPassword");
             beginPwResetEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
@@ -136,6 +145,7 @@ namespace RolyAuth
             var AppsController = apiGateway.Root.AddResource("apps");
             AppsController.AddMethod("GET", new LambdaIntegration(backendLambdaFunc), authorizedMethodOptions);
 
+            
 
             // Output information to SSM
             var userPoolIdSsm = new StringParameter(this, $"{infraPrefix}-userPoolIdSsm-ssm", new StringParameterProps()

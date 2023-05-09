@@ -17,8 +17,8 @@ If you're looking for a really simple authentication service to begin messing ar
 **Quick start:**
 
  - Clone the repo.
- - Run `BuildLambda.cmd` located within `src\Lambda\BackendFunction` of the solution.
- - Open a terminal window in the root of the solution and run `cdk deploy`
+ - Run `BuildAndDeploy.cmd` located in the root of the solution.
+ - You may need to follow y/n prompts when first deploying, or changing any infrastructure in the CDK stack
 
 Once the stack is deployed into your AWS environment, you should be able to log in to console and see the url for the API Gateway which sits in front of the application so you can start testing requests, something like this:
 ![enter image description here](https://i.imgur.com/lQn0Ul9.png)
