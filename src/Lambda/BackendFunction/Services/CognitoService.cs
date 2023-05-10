@@ -152,7 +152,8 @@ namespace ApiFunction.Services
                 var idpResponse = await _cognitoIdp.AdminInitiateAuthAsync(authReq);
                 var clientResponse = new LoginResponse
                 {
-                    BearerToken = idpResponse.AuthenticationResult.IdToken,
+                    IdToken = idpResponse.AuthenticationResult.IdToken,
+                    AccessToken = idpResponse.AuthenticationResult.AccessToken,
                     Expiry = idpResponse.AuthenticationResult.ExpiresIn,
                     RefreshToken = idpResponse.AuthenticationResult.RefreshToken
                 };
