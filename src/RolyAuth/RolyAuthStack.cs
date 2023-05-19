@@ -143,12 +143,18 @@ namespace RolyAuth
 
             // Auth endpoints
             var authController = apiGateway.Root.AddResource("account");
+            
             var registerEndpoint = authController.AddResource("register");
             registerEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
+
             var loginEndpoint = authController.AddResource("login", openEndpointOptions);
             loginEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
+            var loginWithTokenEndpoint = loginEndpoint.AddResource("token", openEndpointOptions);
+            loginWithTokenEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
+            
             var beginPwResetEndpoint = authController.AddResource("forgotPassword");
             beginPwResetEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
+
             var confirmPwResetEndpoint = authController.AddResource("resetPassword");
             confirmPwResetEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
 
