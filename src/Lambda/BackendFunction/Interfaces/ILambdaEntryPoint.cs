@@ -11,6 +11,7 @@ namespace ApiFunction.Interfaces
     {
         Task<APIGatewayProxyResponse> RegisterUser(APIGatewayProxyRequest request);
         Task<APIGatewayProxyResponse> LoginWithUsernamePassword(APIGatewayProxyRequest request);
+        Task<APIGatewayProxyResponse> LoginWithRefreshToken(APIGatewayProxyRequest request);
         APIGatewayProxyResponse GetApps();
         Task<APIGatewayProxyResponse> BeginPasswordReset(APIGatewayProxyRequest request);
         Task<APIGatewayProxyResponse> ConfirmPasswordReset(APIGatewayProxyRequest request);

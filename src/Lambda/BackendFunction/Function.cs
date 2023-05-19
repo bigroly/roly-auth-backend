@@ -42,6 +42,9 @@ namespace Lambda.ApiFunction
             if (request.Path == "/account/login" && request.HttpMethod.ToLower() == "post")
                 return await _lambdaEntryPoint.LoginWithUsernamePassword(request);
 
+            if (request.Path == "/account/login/token" && request.HttpMethod.ToLower() == "post")
+                return await _lambdaEntryPoint.LoginWithRefreshToken(request);
+
             if (request.Path == "/account/forgotPassword" && request.HttpMethod.ToLower() == "post")
                 return await _lambdaEntryPoint.BeginPasswordReset(request);
 

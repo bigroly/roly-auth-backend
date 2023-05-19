@@ -147,16 +147,45 @@ namespace ApiFunction.Services
                 }
             };
 
+            return await InitiateCognitoAuth(authReq);
+        }
+
+        public async Task<APIGatewayProxyResponse> LoginWithRefreshToken(APIGatewayProxyRequest apiRequest)
+        {
+            LoginWithTokenRequest requestBody;
             try
             {
-                var idpResponse = await _cognitoIdp.AdminInitiateAuthAsync(authReq);
-                var clientResponse = new LoginResponse
+                requestBody = JsonConvert.DeserializeObject<LoginWithTokenRequest>(apiRequest.Body);
+            }
+            catch (Exception ex)
+            {
+                return _utils.BadRequest("Sorry, there was a problem validating the request. Please check parameters and try again.");
+            }
+
+            if (string.IsNullOrEmpty(requestBody.RefreshToken))
+            {
+                return _utils.BadRequest("Refresh Token missing in request. Please check parameters and try again.");
+            }
+
+            var authReq = new AdminInitiateAuthRequest
+            {
+                UserPoolId = _config.GetValue<string>("cognitoPoolId"),
+                ClientId = _config.GetValue<string>("userPoolClientId"),
+                AuthFlow = AuthFlowType.REFRESH_TOKEN_AUTH,
+                AuthParameters = new Dictionary<string, string>
                 {
-                    IdToken = idpResponse.AuthenticationResult.IdToken,
-                    AccessToken = idpResponse.AuthenticationResult.AccessToken,
-                    Expiry = idpResponse.AuthenticationResult.ExpiresIn,
-                    RefreshToken = idpResponse.AuthenticationResult.RefreshToken
-                };
+                    { "REFRESH_TOKEN", requestBody.RefreshToken }
+                }
+            };
+
+            return await InitiateCognitoAuth(authReq);
+        }
+
+        private async Task<APIGatewayProxyResponse> InitiateCognitoAuth(AdminInitiateAuthRequest request)
+        {
+            try
+            {
+                var clientResponse = await _cognitoIdp.AdminInitiateAuthAsync(authReq);
                 return _utils.Ok(JsonConvert.SerializeObject(clientResponse), "application/json");
             }
             catch (UserNotFoundException e)
@@ -176,7 +205,6 @@ namespace ApiFunction.Services
                 _logger.LogError(e, "Exception encountered in POST to /api/auth/login");
                 return _utils.ServerError("Sorry, something went wrong logging you in. We'll look into it.");
             }
-
         }
 
         private bool PasswordValid(string password)
