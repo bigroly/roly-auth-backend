@@ -185,7 +185,7 @@ namespace ApiFunction.Services
         {
             try
             {
-                var clientResponse = await _cognitoIdp.AdminInitiateAuthAsync(authReq);
+                var clientResponse = await _cognitoIdp.AdminInitiateAuthAsync(request);
                 return _utils.Ok(JsonConvert.SerializeObject(clientResponse), "application/json");
             }
             catch (UserNotFoundException e)
