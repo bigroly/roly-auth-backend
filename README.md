@@ -42,6 +42,14 @@ POST to `account/login`
 	    "email":  "jane.citizen@email.io",
 	    "password":  "someP@ssw0rdHere!"
     }
+*The IdToken property returned is the bearer token to be used with subsequent requests to authorized endpoints.*
+
+*Refresh Session with LoginToken*
+POST to `/account/login/token`
+
+    {
+    	"refreshToken":  "eyJd...",
+    }
 
 *Begin Password Reset*
 POST to `account/forgotPassword`
@@ -70,3 +78,63 @@ That's about it at the moment. I hope to have a bit more time to tinker with thi
 **Need to nuke it?**
 Run `cdk destroy` at the solution root folder, follow the in-cmd prompts and your stack will be taken down and destroyed.
 **Note**: The CognitoPool in this CDK stack will not be retained if you pull the pin, this means all your user data will be deleted when you destroy the stack.
+
+
+## Bonus: Verifying a JWT token from your Cognito Auth application in a .Net Core API
+
+This was surprisingly simple! We just need to configure Token validation in the application startup and away you go.
+
+So, in your `Startup.cs` file:
+
+    public void ConfigureServices(IServiceCollection services)
+        {           
+            ...
+            // I'm not sure if order matters but I did this after .AddControllers
+
+            services.AddAuthentication()
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = GetCognitoTokenValidationParams(configRoot);
+                });
+
+        }
+        
+    private TokenValidationParameters GetCognitoTokenValidationParams(IConfiguration configuration)
+        {
+            var cognitoIssuer = configuration["Cognito:IssuerUrl"];
+            var jwtKeySetUrl = $"{cognitoIssuer}/.well-known/jwks.json";
+            var cognitoAudience = configuration["Cognito:ClientId"];
+
+            return new TokenValidationParameters
+            {
+                IssuerSigningKeyResolver = (s, securityToken, identifier, parameters) =>
+                {
+                    // get JsonWebKeySet from AWS 
+                    var json = new WebClient().DownloadString(jwtKeySetUrl);
+
+                    // serialize the result 
+                    var keys = JsonConvert.DeserializeObject<JsonWebKeySet>(json).Keys;
+
+                    // cast the result to be the type expected by IssuerSigningKeyResolver 
+                    return (IEnumerable<SecurityKey>)keys;
+                },
+                ValidIssuer = cognitoIssuer,
+                ValidateIssuerSigningKey = true,
+                ValidateIssuer = true,
+                ValidateLifetime = true,
+                ValidAudience = cognitoAudience
+            };
+        }
+
+
+and then your `appsettings.json` file should look something like:
+
+    {
+      ...
+      "Cognito": {
+        "ClientId": "{your-client-id-here}",
+        "IssuerUrl": "https://cognito-idp.{your-aws-region-here}.amazonaws.com/{your-aws-region-here}_{your-cognito-pool-id-here}"
+      }
+    }
+
+Once these are set up, you can just use the `[Authorize]` attribute on your controllers / endpoints to protect them by only allowing requests with valid Bearer (IdToken) tokens through.
