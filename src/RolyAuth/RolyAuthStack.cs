@@ -141,6 +141,15 @@ namespace RolyAuth
                 }
             };
 
+            var limitedEndpointOptions = new ResourceOptions()
+            {
+                DefaultCorsPreflightOptions = new CorsOptions
+                {
+                    AllowOrigins = new[] { "https://auth.rolyapps.com", "http://localhost" },
+                    AllowHeaders = new[] { "Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key", "X-Amz-Security-Token" }
+                }
+            };
+
             // Auth endpoints
             var authController = apiGateway.Root.AddResource("account");
             
@@ -152,14 +161,14 @@ namespace RolyAuth
             var loginWithTokenEndpoint = loginEndpoint.AddResource("token", openEndpointOptions);
             loginWithTokenEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
             
-            var beginPwResetEndpoint = authController.AddResource("forgotPassword");
+            var beginPwResetEndpoint = authController.AddResource("forgotPassword", limitedEndpointOptions);
             beginPwResetEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
 
-            var confirmPwResetEndpoint = authController.AddResource("resetPassword");
+            var confirmPwResetEndpoint = authController.AddResource("resetPassword", limitedEndpointOptions);
             confirmPwResetEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
 
             // Apps endpoints
-            var AppsController = apiGateway.Root.AddResource("apps");
+            var AppsController = apiGateway.Root.AddResource("apps", limitedEndpointOptions);
             AppsController.AddMethod("GET", new LambdaIntegration(backendLambdaFunc), authorizedMethodOptions);
 
             
