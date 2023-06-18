@@ -1,6 +1,7 @@
 using Amazon.CDK;
 using Amazon.CDK.AWS.APIGateway;
 using Amazon.CDK.AWS.Cognito;
+using Amazon.CDK.AWS.DynamoDB;
 using Amazon.CDK.AWS.IAM;
 using Amazon.CDK.AWS.Lambda;
 using Amazon.CDK.AWS.Lambda.EventSources;
@@ -109,7 +110,7 @@ namespace RolyAuth
                 Effect = Effect.ALLOW
             }));
 
-            // APIGateway 
+            // API Gateway 
             string apiName = $"{infraPrefix}-ApiGateway";
             var apiGateway = new RestApi(this, apiName, new RestApiProps()
             {
@@ -131,7 +132,6 @@ namespace RolyAuth
             };
 
             // API Methods
-
             var openEndpointOptions = new ResourceOptions()
             {
                 DefaultCorsPreflightOptions = new CorsOptions
@@ -171,7 +171,19 @@ namespace RolyAuth
             var AppsController = apiGateway.Root.AddResource("apps", limitedEndpointOptions);
             AppsController.AddMethod("GET", new LambdaIntegration(backendLambdaFunc), authorizedMethodOptions);
 
-            
+            // Apps table
+            var appsTableName = "rolyauth-apps";
+            var appsTable = new Table(this, appsTableName, new TableProps
+            {
+                TableName = appsTableName,
+                PartitionKey = new Attribute
+                {
+                    Name = "AppName",
+                    Type = AttributeType.STRING
+                },
+                BillingMode = BillingMode.PAY_PER_REQUEST,
+                RemovalPolicy = RemovalPolicy.DESTROY
+            });            
 
             // Output information to SSM
             var userPoolIdSsm = new StringParameter(this, $"{infraPrefix}-userPoolIdSsm-ssm", new StringParameterProps()
@@ -200,7 +212,14 @@ namespace RolyAuth
                 Description = "Auth API Gateway Url",
                 ParameterName = $"{infraSsmPrefix}/apiGatewayUrl",
                 StringValue = apiGateway.Url
-            });            
+            });
+
+            var appsTableNameSsm = new StringParameter(this, $"{infraPrefix}-appsTableName-ssm", new StringParameterProps()
+            {
+                Description = "Apps Table Name",
+                ParameterName = $"{infraSsmPrefix}/appsTableName",
+                StringValue = appsTable.TableName
+            });
         }
     }
 }
