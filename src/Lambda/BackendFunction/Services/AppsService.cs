@@ -66,7 +66,7 @@ namespace ApiFunction.Services
 
             var appsResponse = new GetAppsResponse
             {
-                Apps = allowedApps
+                Apps = allowedApps.OrderBy(a => a.AppName).ToList(),
             };
 
             return _utils.Ok(JsonConvert.SerializeObject(appsResponse), "application/json");

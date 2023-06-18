@@ -19,6 +19,14 @@ namespace ApiFunction.Models
         public string MatIcon { get; set; }
 
         [DynamoDBProperty]
+        public string IconBg { get; set; }
+        // #ffffff hex key for icon background
+
+        [DynamoDBProperty]
+        public string IconColour { get; set; }
+        // #ffffff hex key for icon Colour
+
+        [DynamoDBProperty]
         public string LoginUrl { get; set; }
 
         [DynamoDBProperty]
