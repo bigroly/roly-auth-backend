@@ -9,6 +9,6 @@ namespace ApiFunction.Interfaces
 {
     public interface IAppsService
     {
-        APIGatewayProxyResponse GetApplications();
+        Task<APIGatewayProxyResponse> GetApplications(APIGatewayProxyRequest request);
     }
 }

@@ -52,7 +52,7 @@ namespace Lambda.ApiFunction
                 return await _lambdaEntryPoint.ConfirmPasswordReset(request);
 
             if (request.Path == "/apps" && request.HttpMethod.ToLower() == "get")
-                return _lambdaEntryPoint.GetApps();
+                return await _lambdaEntryPoint.GetApps(request);
 
 
             _logger.LogError($"Received request for unknown resource Path:[{request.Path}], Method:[{request.HttpMethod}]");

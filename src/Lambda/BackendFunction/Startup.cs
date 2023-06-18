@@ -1,5 +1,6 @@
 ﻿using Amazon.CognitoIdentityProvider;
 using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.DataModel;
 using Amazon.Extensions.NETCore.Setup;
 using Amazon.SimpleSystemsManagement;
 using ApiFunction.Interfaces;
@@ -71,6 +72,7 @@ namespace ApiFunction
 
             // Our services
             services.AddSingleton<IUtilities, Utilities>();
+            services.AddSingleton<IDynamoDBContext, DynamoDBContext>();
             services.AddSingleton<ICognitoService, CognitoService>();
             services.AddSingleton<IPasswordRecoveryService, PasswordRecoveryService>();
             services.AddSingleton<IAppsService, AppsService>();

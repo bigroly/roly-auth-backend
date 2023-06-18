@@ -39,9 +39,9 @@ namespace ApiFunction
             return await _cognitoService.LoginWithRefreshToken(request);
         }
 
-        public APIGatewayProxyResponse GetApps()
+        public async Task<APIGatewayProxyResponse> GetApps(APIGatewayProxyRequest request)
         {
-            return _appsService.GetApplications();
+            return await _appsService.GetApplications(request);
         }
 
         public async Task<APIGatewayProxyResponse> BeginPasswordReset(APIGatewayProxyRequest request)
