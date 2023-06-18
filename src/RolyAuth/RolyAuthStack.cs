@@ -151,7 +151,7 @@ namespace RolyAuth
             // Auth endpoints
             var authController = apiGateway.Root.AddResource("account");
             
-            var registerEndpoint = authController.AddResource("register");
+            var registerEndpoint = authController.AddResource("register", openEndpointOptions);
             registerEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
 
             var loginEndpoint = authController.AddResource("login", openEndpointOptions);
