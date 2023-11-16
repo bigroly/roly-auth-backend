@@ -63,7 +63,7 @@ namespace RolyAuth
                 UserPool = userPool,
                 AccessTokenValidity = Duration.Hours(1),
                 IdTokenValidity = Duration.Minutes(20),
-                RefreshTokenValidity = Duration.Hours(5),
+                RefreshTokenValidity = Duration.Days(30),
                 AuthFlows = new AuthFlow
                 {
                     UserPassword = true,
