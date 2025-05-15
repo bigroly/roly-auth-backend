@@ -84,7 +84,7 @@ namespace RolyAuth
             // API Lambda definition
             var backendLambdaFunc = new Function(this, $"{infraPrefix}-BackendLambdaFunc", new FunctionProps
             {
-                Runtime = Runtime.DOTNET_6,
+                Runtime = Runtime.DOTNET_8,
                 Handler = "ApiFunction::Lambda.ApiFunction.Function::FunctionHandler",
                 Code = Code.FromAsset("./src/dist/backendFunction.zip"),
                 MemorySize = 1024

@@ -190,7 +190,7 @@ namespace ApiFunction.Services
                 {
                     IdToken = clientResponse.AuthenticationResult.IdToken,
                     AccessToken = clientResponse.AuthenticationResult.AccessToken,
-                    Expiry = clientResponse.AuthenticationResult.ExpiresIn,
+                    Expiry = clientResponse.AuthenticationResult.ExpiresIn ?? (long)0,
                     RefreshToken = clientResponse.AuthenticationResult.RefreshToken
                 };
                 return _utils.Ok(JsonConvert.SerializeObject(apiResponse), "application/json");
