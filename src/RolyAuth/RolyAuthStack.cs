@@ -4,13 +4,9 @@ using Amazon.CDK.AWS.Cognito;
 using Amazon.CDK.AWS.DynamoDB;
 using Amazon.CDK.AWS.IAM;
 using Amazon.CDK.AWS.Lambda;
-using Amazon.CDK.AWS.Lambda.EventSources;
-using Amazon.CDK.AWS.S3;
-using Amazon.CDK.AWS.SAM;
 using Amazon.CDK.AWS.SSM;
 using Constructs;
 using System.Collections.Generic;
-using System.Diagnostics.Tracing;
 
 namespace RolyAuth
 {
@@ -56,7 +52,7 @@ namespace RolyAuth
 
             // Cognito App Client
             // todo - get this from SSM?
-            string[] CallbackUrls = new string[] { "http://localhost" };
+            string[] callbackUrls = ["http://localhost"];
             var cognitoAppClient = new UserPoolClient(this, "{infraPrefix}-CognitoClient", new UserPoolClientProps
             {
                 UserPoolClientName = "RolyAppsCognitoClient",
@@ -72,7 +68,7 @@ namespace RolyAuth
                 },
                 OAuth = new OAuthSettings
                 {
-                    CallbackUrls = CallbackUrls,
+                    CallbackUrls = callbackUrls,
                     Flows = new OAuthFlows
                     {
                         ImplicitCodeGrant = true
@@ -113,7 +109,7 @@ namespace RolyAuth
             var apiGateway = new RestApi(this, apiName, new RestApiProps()
             {
                 RestApiName = apiName,
-                Description = "Lambda Backend API",
+                Description = "Auth Service Lambda Backend API",
                 DeployOptions = new StageOptions
                 {
                     StageName = "Prod",
@@ -122,15 +118,7 @@ namespace RolyAuth
                 }
             });
 
-            var cognitoAuthorizer = new CognitoUserPoolsAuthorizer(this, $"{infraPrefix}-CognitoPoolsAuthorizer", new CognitoUserPoolsAuthorizerProps { CognitoUserPools = new[] { userPool } });
-            var authorizedMethodOptions = new MethodOptions
-            {
-                Authorizer = cognitoAuthorizer,
-                AuthorizationType = AuthorizationType.COGNITO
-            };
-
-            // API Methods
-            var openEndpointOptions = new ResourceOptions()
+            var corsAnyOrigin = new ResourceOptions()
             {
                 DefaultCorsPreflightOptions = new CorsOptions
                 {
@@ -139,35 +127,46 @@ namespace RolyAuth
                 }
             };
 
-            var limitedEndpointOptions = new ResourceOptions()
+            var corsLimitedOrigins = new ResourceOptions()
             {
                 DefaultCorsPreflightOptions = new CorsOptions
                 {
-                    AllowOrigins = new[] { "https://auth.rolyapps.com", "http://localhost" },
+                    AllowOrigins = new[] { "https://auth.rolyapps.com", "http://localhost:4200" },
                     AllowHeaders = new[] { "Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key", "X-Amz-Security-Token" }
                 }
+            };
+            
+            var cognitoAuthorizer = new CognitoUserPoolsAuthorizer(this, $"{infraPrefix}-CognitoPoolsAuthorizer", 
+                new CognitoUserPoolsAuthorizerProps { 
+                    CognitoUserPools = [userPool]
+                });
+            
+            var authorizedMethodOptions = new MethodOptions
+            {
+                Authorizer = cognitoAuthorizer,
+                AuthorizationType = AuthorizationType.COGNITO
             };
 
             // Auth endpoints
             var authController = apiGateway.Root.AddResource("account");
             
-            var registerEndpoint = authController.AddResource("register", openEndpointOptions);
+            var registerEndpoint = authController.AddResource("register", corsAnyOrigin);
             registerEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
 
-            var loginEndpoint = authController.AddResource("login", openEndpointOptions);
+            var loginEndpoint = authController.AddResource("login", corsAnyOrigin);
             loginEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
-            var loginWithTokenEndpoint = loginEndpoint.AddResource("token", openEndpointOptions);
+            var loginWithTokenEndpoint = loginEndpoint.AddResource("token", corsAnyOrigin);
             loginWithTokenEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
             
-            var beginPwResetEndpoint = authController.AddResource("forgotPassword", limitedEndpointOptions);
+            var beginPwResetEndpoint = authController.AddResource("forgotPassword", corsLimitedOrigins);
             beginPwResetEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
 
-            var confirmPwResetEndpoint = authController.AddResource("resetPassword", limitedEndpointOptions);
+            var confirmPwResetEndpoint = authController.AddResource("resetPassword", corsLimitedOrigins);
             confirmPwResetEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
 
             // Apps endpoints
-            var AppsController = apiGateway.Root.AddResource("apps", limitedEndpointOptions);
-            AppsController.AddMethod("GET", new LambdaIntegration(backendLambdaFunc), authorizedMethodOptions);
+            var appsController = apiGateway.Root.AddResource("apps", corsLimitedOrigins);
+            appsController.AddMethod("GET", new LambdaIntegration(backendLambdaFunc), authorizedMethodOptions);
 
             // Apps table
             var appsTableName = "rolyauth-apps";
