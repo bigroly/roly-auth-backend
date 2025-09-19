@@ -118,6 +118,38 @@ namespace ApiFunction.Services
             return _utils.Ok(null, null);
         }
 
+        public async Task<APIGatewayProxyResponse> InitiateOtpLogin(APIGatewayProxyRequest apiRequest)
+        {
+            EmailOtpRequest requestBody;
+            try
+            {
+                requestBody = JsonConvert.DeserializeObject<EmailOtpRequest>(apiRequest.Body);
+            }
+            catch (Exception ex)
+            {
+                return _utils.BadRequest("Sorry, there was a problem validating the request. Please check parameters and try again.");
+            }
+
+            if (string.IsNullOrEmpty(requestBody?.Email))
+            {
+                return _utils.BadRequest("Email missing in request. Please check parameters and try again.");
+            }
+            
+            var authReq = new AdminInitiateAuthRequest
+            {
+                UserPoolId = _config.GetValue<string>("cognitoPoolId"),
+                ClientId = _config.GetValue<string>("userPoolClientId"),
+                AuthFlow = AuthFlowType.USER_AUTH,
+                AuthParameters = new Dictionary<string, string>
+                {
+                    { "USERNAME", requestBody.Email },
+                    { "PREFERRED_CHALLENGE", "EMAIL_OTP"}
+                }
+            };
+
+            return await InitiateCognitoAuth(authReq);
+        }
+
         public async Task<APIGatewayProxyResponse> LoginWithUsernamePassword(APIGatewayProxyRequest apiRequest)
         {
             LoginRequest requestBody;
@@ -186,6 +218,14 @@ namespace ApiFunction.Services
             try
             {
                 var clientResponse = await _cognitoIdp.AdminInitiateAuthAsync(request);
+
+                // OTP login initaited - nothing to return:
+                if (request.AuthParameters.Any(a => a.Key == "PREFERRED_CHALLENGE"))
+                {
+                    return _utils.Ok(null, null);   
+                }
+                
+                // Return tokens for Password Login:
                 var apiResponse = new LoginResponse
                 {
                     IdToken = clientResponse.AuthenticationResult.IdToken,

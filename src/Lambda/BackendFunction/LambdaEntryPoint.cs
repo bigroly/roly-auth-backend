@@ -29,6 +29,11 @@ namespace ApiFunction
             return await _cognitoService.RegisterUser(request);
         }
 
+        public async Task<APIGatewayProxyResponse> InitiateOtpLogin(APIGatewayProxyRequest request)
+        {
+            return await _cognitoService.InitiateOtpLogin(request);       
+        }
+
         public async Task<APIGatewayProxyResponse> LoginWithUsernamePassword(APIGatewayProxyRequest request)
         {
             return await _cognitoService.LoginWithUsernamePassword(request);
