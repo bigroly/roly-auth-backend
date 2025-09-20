@@ -44,6 +44,9 @@ namespace Lambda.ApiFunction
             
             if (request.Path == "/account/login/requestOtp" && request.HttpMethod.ToLower() == "post")
                 return await _lambdaEntryPoint.InitiateOtpLogin(request);
+            
+            if (request.Path == "/account/login/submitEmailOtp" && request.HttpMethod.ToLower() == "post")
+                return await _lambdaEntryPoint.SubmitEmailOtp(request);
 
             if (request.Path == "/account/login/token" && request.HttpMethod.ToLower() == "post")
                 return await _lambdaEntryPoint.LoginWithRefreshToken(request);

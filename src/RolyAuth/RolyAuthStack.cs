@@ -110,7 +110,8 @@ namespace RolyAuth
                     "cognito-idp:AdminEnableUser",
                     "cognito-idp:AdminSetUserPassword",
                     "cognito-idp:AdminInitiateAuth",
-                    "cognito-idp:ConfirmForgotPassword"
+                    "cognito-idp:ConfirmForgotPassword",
+                    "cognito-idp:AdminRespondToAuthChallenge"
                 },
                 Resources = new[] { "*" },
                 Effect = Effect.ALLOW
@@ -171,6 +172,8 @@ namespace RolyAuth
             loginWithTokenEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
             var loginWithOtpEndpoint = loginEndpoint.AddResource("requestOtp", corsAnyOrigin);
             loginWithOtpEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
+            var submitEmailOtpEndpoint = loginEndpoint.AddResource("submitEmailOtp", corsAnyOrigin);
+            submitEmailOtpEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
             
             var beginPwResetEndpoint = authController.AddResource("forgotPassword", corsLimitedOrigins);
             beginPwResetEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
