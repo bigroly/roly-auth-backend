@@ -22,7 +22,16 @@ namespace RolyAuth
             var userPool = new UserPool(this, poolName, new UserPoolProps
             {
                 UserPoolName = poolName,
+                FeaturePlan = FeaturePlan.ESSENTIALS,
                 RemovalPolicy = RemovalPolicy.DESTROY,
+                SignInPolicy = new SignInPolicy()
+                {
+                    AllowedFirstAuthFactors = new AllowedFirstAuthFactors()
+                    {
+                        Password = true,
+                        EmailOtp = true
+                    }
+                },
                 SignInAliases = new SignInAliases
                 {
                     Email = true
@@ -39,7 +48,9 @@ namespace RolyAuth
                     EmailSubject = "Your RolyApps Verification Code",
                     EmailStyle = VerificationEmailStyle.CODE,
                     EmailBody = "Your RolyApps verification code is {####}. Please enter this code on the website where prompted and do NOT share this code with anyone."
-                }
+                },
+                Mfa = Mfa.OPTIONAL,
+                MfaMessage = "Your RolyApps Login Code is {####}. Please enter this code on the website where prompted and do NOT share this code with anyone.",
             });
 
             // Cognito user group
@@ -65,6 +76,7 @@ namespace RolyAuth
                     UserPassword = true,
                     UserSrp = true,
                     AdminUserPassword = true,
+                    User = true
                 },
                 OAuth = new OAuthSettings
                 {
@@ -98,7 +110,8 @@ namespace RolyAuth
                     "cognito-idp:AdminEnableUser",
                     "cognito-idp:AdminSetUserPassword",
                     "cognito-idp:AdminInitiateAuth",
-                    "cognito-idp:ConfirmForgotPassword"
+                    "cognito-idp:ConfirmForgotPassword",
+                    "cognito-idp:AdminRespondToAuthChallenge"
                 },
                 Resources = new[] { "*" },
                 Effect = Effect.ALLOW
@@ -157,6 +170,10 @@ namespace RolyAuth
             loginEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
             var loginWithTokenEndpoint = loginEndpoint.AddResource("token", corsAnyOrigin);
             loginWithTokenEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
+            var loginWithOtpEndpoint = loginEndpoint.AddResource("requestOtp", corsAnyOrigin);
+            loginWithOtpEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
+            var submitEmailOtpEndpoint = loginEndpoint.AddResource("submitEmailOtp", corsAnyOrigin);
+            submitEmailOtpEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
             
             var beginPwResetEndpoint = authController.AddResource("forgotPassword", corsLimitedOrigins);
             beginPwResetEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });

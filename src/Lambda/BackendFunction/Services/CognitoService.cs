@@ -16,6 +16,7 @@ using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using ApiFunction.Enums;
 
 namespace ApiFunction.Services
 {
@@ -118,6 +119,105 @@ namespace ApiFunction.Services
             return _utils.Ok(null, null);
         }
 
+        public async Task<APIGatewayProxyResponse> InitiateOtpLogin(APIGatewayProxyRequest apiRequest)
+        {
+            EmailOtpRequest requestBody;
+            try
+            {
+                requestBody = JsonConvert.DeserializeObject<EmailOtpRequest>(apiRequest.Body);
+            }
+            catch (Exception ex)
+            {
+                return _utils.BadRequest("Sorry, there was a problem validating the request. Please check parameters and try again.");
+            }
+
+            if (string.IsNullOrEmpty(requestBody?.Email))
+            {
+                return _utils.BadRequest("Email missing in request. Please check parameters and try again.");
+            }
+            
+            var authReq = new AdminInitiateAuthRequest
+            {
+                UserPoolId = _config.GetValue<string>("cognitoPoolId"),
+                ClientId = _config.GetValue<string>("userPoolClientId"),
+                AuthFlow = AuthFlowType.USER_AUTH,
+                AuthParameters = new Dictionary<string, string>
+                {
+                    { "USERNAME", requestBody.Email },
+                    { "PREFERRED_CHALLENGE", "EMAIL_OTP"}
+                }
+            };
+
+            return await InitiateCognitoAuth(authReq);
+        }
+
+        public async Task<APIGatewayProxyResponse> SubmitEmailOtp(APIGatewayProxyRequest apiRequest)
+        {
+            SubmitOtpRequest requestBody;
+            try
+            {
+                requestBody = JsonConvert.DeserializeObject<SubmitOtpRequest>(apiRequest.Body);
+            }
+            catch (Exception ex)
+            {
+                return _utils.BadRequest("Sorry, there was a problem validating the request. Please check parameters and try again.");
+            }
+
+            if (string.IsNullOrEmpty(requestBody.Code))
+            {
+                return _utils.BadRequest("OTP missing in request. Please check parameters and try again.");
+            }
+
+            var cognitoRequest = new AdminRespondToAuthChallengeRequest()
+            {
+                ChallengeName = ChallengeNameType.EMAIL_OTP,
+                Session = requestBody.SessionToken,
+                ChallengeResponses = new Dictionary<string, string>()
+                {
+                    { "USERNAME" , requestBody.Email },
+                    { "EMAIL_OTP_CODE", requestBody.Code }
+                },
+                ClientId = _config.GetValue<string>("userPoolClientId"),
+                UserPoolId = _config.GetValue<string>("cognitoPoolId")
+            };
+
+            try
+            {
+                var clientResponse = await _cognitoIdp.AdminRespondToAuthChallengeAsync(cognitoRequest);
+
+                // Return tokens for Password Login:
+                var apiResponse = new LoginResponse
+                {
+                    IdToken = clientResponse.AuthenticationResult.IdToken,
+                    AccessToken = clientResponse.AuthenticationResult.AccessToken,
+                    Expiry = clientResponse.AuthenticationResult.ExpiresIn ?? (long)0,
+                    RefreshToken = clientResponse.AuthenticationResult.RefreshToken
+                };
+                return _utils.Ok(JsonConvert.SerializeObject(apiResponse), "application/json");
+            }
+            catch (UserNotFoundException e)
+            {
+                return _utils.BadRequest("Sorry, your username or password is incorrect.");
+            }
+            catch (CodeMismatchException e)
+            {
+                return _utils.BadRequest("The provided code is incorrect. Please try again.");
+            }
+            catch (ExpiredCodeException e)
+            {
+                return _utils.BadRequest("The provided code has expired. Please request a new one and try again.");
+            }
+            catch (NotAuthorizedException e)
+            {
+                return _utils.BadRequest("Sorry, your provided details are incorrect. Please try again.");
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Exception encountered in POST to /api/auth/login");
+                return _utils.ServerError("Sorry, something went wrong logging you in. We'll look into it.");
+            }
+        }
+
         public async Task<APIGatewayProxyResponse> LoginWithUsernamePassword(APIGatewayProxyRequest apiRequest)
         {
             LoginRequest requestBody;
@@ -186,6 +286,19 @@ namespace ApiFunction.Services
             try
             {
                 var clientResponse = await _cognitoIdp.AdminInitiateAuthAsync(request);
+
+                // OTP login initaited - return different model:
+                if (request.AuthParameters.Any(a => a.Key == "PREFERRED_CHALLENGE"))
+                {
+                    var otpResponse = new InitiateOtpResponse()
+                    {
+                        OtpMethod = OtpMethod.Email,
+                        SessionToken = clientResponse.Session
+                    };
+                    return _utils.Ok(JsonConvert.SerializeObject(otpResponse), "application/json");   
+                }
+                
+                // Return tokens for Password Login:
                 var apiResponse = new LoginResponse
                 {
                     IdToken = clientResponse.AuthenticationResult.IdToken,
