@@ -64,10 +64,9 @@ namespace ApiFunction
             services.AddAWSService<IAmazonSimpleSystemsManagement>();
             services.AddAWSService<IAmazonDynamoDB>();
             services.AddAWSService<IAmazonCognitoIdentityProvider>();
+            services.AddSingleton<IDynamoDBContext, DynamoDBContext>();
 
             // Our services
-            services.AddSingleton<IUtilities, Utilities>();
-            services.AddSingleton<IDynamoDBContext, DynamoDBContext>();
             services.AddSingleton<ICognitoService, CognitoService>();
             services.AddSingleton<IPasswordRecoveryService, PasswordRecoveryService>();
             services.AddSingleton<IAppsService, AppsService>();

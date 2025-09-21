@@ -1,21 +1,11 @@
 ﻿using Amazon.CognitoIdentityProvider;
 using Amazon.CognitoIdentityProvider.Model;
 using Amazon.Lambda.APIGatewayEvents;
-using Amazon.Runtime.Internal;
-using Amazon.Runtime.Internal.Transform;
-using Amazon.Runtime.Internal.Util;
 using ApiFunction.Interfaces;
 using ApiFunction.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using ApiFunction.Enums;
 using ApiFunction.Util;
 
@@ -26,31 +16,24 @@ namespace ApiFunction.Services
         private readonly IConfiguration _config;
         private readonly IAmazonCognitoIdentityProvider _cognitoIdp;
         private readonly ILogger<CognitoService> _logger;
-        private readonly IUtilities _utils;
 
-        public CognitoService(IConfiguration config, IAmazonCognitoIdentityProvider cognitoIdp, ILogger<CognitoService> logger, IUtilities utils)
+        public CognitoService(IConfiguration config, IAmazonCognitoIdentityProvider cognitoIdp, ILogger<CognitoService> logger)
         {
             _config = config;
             _cognitoIdp = cognitoIdp;
             _logger = logger;
-            _utils = utils;
         }
 
         public async Task<APIGatewayProxyResponse> RegisterOtpUser(APIGatewayProxyRequest apiRequest)
         {
-            OtpRegistrationRequest requestBody;
-            try
+            if (!ApiGatewayUtil.TryParseRequest<OtpRegistrationRequest>(apiRequest, out var requestBody, out var errorResponse))
             {
-                requestBody = JsonConvert.DeserializeObject<OtpRegistrationRequest>(apiRequest.Body);
-            }
-            catch (Exception ex)
-            {
-                return _utils.BadRequest("Sorry, there was a problem validating the request. Please check parameters and try again.");
+                return errorResponse;
             }
             
             if (string.IsNullOrEmpty(requestBody.Email) || string.IsNullOrEmpty(requestBody.Name))
             {
-                return _utils.BadRequest("Email or Name missing in request. Please check parameters and try again.");
+                return ApiGatewayUtil.BadRequest("Email or Name missing in request. Please check parameters and try again.");
             }
             
             AdminCreateUserRequest createUserReq = new AdminCreateUserRequest()
@@ -87,7 +70,7 @@ namespace ApiFunction.Services
             catch (Exception ex)
             {
                 _logger.LogError($"Error creating User with email: [{requestBody.Email}] - {ex.Message}", ex);
-                return _utils.ServerError("Sorry, something went wrong creating your account. We'll look into it.");
+                return ApiGatewayUtil.ServerError("Sorry, something went wrong creating your account. We'll look into it.");
             }
             
             _logger.LogInformation("User created successfully: {user}. User status: {status}", userCreated.User.Username, userCreated.User.UserStatus.ToString());
@@ -106,26 +89,26 @@ namespace ApiFunction.Services
             return await InitiateCognitoAuth(authReq);
         }
 
+        // public async Task<APIGatewayProxyResponse> ConfirmOtpUser(APIGatewayProxyRequest apiRequest)
+        // {
+        //     
+        // }
+
         public async Task<APIGatewayProxyResponse> RegisterUser(APIGatewayProxyRequest apiRequest)
         {
-            RegistrationRequest requestBody;
-            try
+            if (!ApiGatewayUtil.TryParseRequest<RegistrationRequest>(apiRequest, out var requestBody, out var errorResponse))
             {
-                requestBody = JsonConvert.DeserializeObject<RegistrationRequest>(apiRequest.Body);
-            }
-            catch (Exception ex)
-            {
-                return _utils.BadRequest("Sorry, there was a problem validating the request. Please check parameters and try again.");
+                return errorResponse;
             }
 
             if (string.IsNullOrEmpty(requestBody.Email) || string.IsNullOrEmpty(requestBody.Password))
             {
-                return _utils.BadRequest("Username or Password missing in request. Please check parameters and try again.");
+                return ApiGatewayUtil.BadRequest("Username or Password missing in request. Please check parameters and try again.");
             }
 
             if (!PasswordUtil.Validate(requestBody.Password))
             {
-                return _utils.BadRequest("Invalid password. Please check it meets minimum requirements (at last 6 characters long, contains number, uppercase, lowercase and special character) and try again.");
+                return ApiGatewayUtil.BadRequest("Invalid password. Please check it meets minimum requirements (at last 6 characters long, contains number, uppercase, lowercase and special character) and try again.");
             }
 
             AdminCreateUserRequest createUserReq = new AdminCreateUserRequest()
@@ -165,7 +148,7 @@ namespace ApiFunction.Services
             catch (Exception ex)
             {
                 _logger.LogError($"Error creating User with email: [{requestBody.Email}] - {ex.Message}", ex);
-                return _utils.ServerError("Sorry, something went wrong creating your account. We'll look into it.");
+                return ApiGatewayUtil.ServerError("Sorry, something went wrong creating your account. We'll look into it.");
             }
 
             AdminSetUserPasswordRequest confirmPw = new AdminSetUserPasswordRequest()
@@ -184,27 +167,22 @@ namespace ApiFunction.Services
             catch(Exception ex)
             {
                 _logger.LogError(ex, $"Error setting pw for User with email: [{requestBody.Email}]");
-                return _utils.ServerError("Sorry, something went wrong creating your account. We'll look into it.");
+                return ApiGatewayUtil.ServerError("Sorry, something went wrong creating your account. We'll look into it.");
             }
 
-            return _utils.Ok(null, null);
+            return ApiGatewayUtil.Ok(null, null);
         }
 
         public async Task<APIGatewayProxyResponse> InitiateOtpLogin(APIGatewayProxyRequest apiRequest)
         {
-            EmailOtpRequest requestBody;
-            try
+            if (!ApiGatewayUtil.TryParseRequest<EmailOtpRequest>(apiRequest, out var requestBody, out var errorResponse))
             {
-                requestBody = JsonConvert.DeserializeObject<EmailOtpRequest>(apiRequest.Body);
-            }
-            catch (Exception ex)
-            {
-                return _utils.BadRequest("Sorry, there was a problem validating the request. Please check parameters and try again.");
+                return errorResponse;
             }
 
             if (string.IsNullOrEmpty(requestBody?.Email))
             {
-                return _utils.BadRequest("Email missing in request. Please check parameters and try again.");
+                return ApiGatewayUtil.BadRequest("Email missing in request. Please check parameters and try again.");
             }
             
             var authReq = new AdminInitiateAuthRequest
@@ -224,19 +202,14 @@ namespace ApiFunction.Services
 
         public async Task<APIGatewayProxyResponse> SubmitEmailOtp(APIGatewayProxyRequest apiRequest)
         {
-            SubmitOtpRequest requestBody;
-            try
+            if (!ApiGatewayUtil.TryParseRequest<SubmitOtpRequest>(apiRequest, out var requestBody, out var errorResponse))
             {
-                requestBody = JsonConvert.DeserializeObject<SubmitOtpRequest>(apiRequest.Body);
-            }
-            catch (Exception ex)
-            {
-                return _utils.BadRequest("Sorry, there was a problem validating the request. Please check parameters and try again.");
+                return errorResponse;
             }
 
             if (string.IsNullOrEmpty(requestBody.Code))
             {
-                return _utils.BadRequest("OTP missing in request. Please check parameters and try again.");
+                return ApiGatewayUtil.BadRequest("OTP missing in request. Please check parameters and try again.");
             }
 
             var cognitoRequest = new AdminRespondToAuthChallengeRequest()
@@ -264,46 +237,41 @@ namespace ApiFunction.Services
                     Expiry = clientResponse.AuthenticationResult.ExpiresIn ?? (long)0,
                     RefreshToken = clientResponse.AuthenticationResult.RefreshToken
                 };
-                return _utils.Ok(JsonConvert.SerializeObject(apiResponse), "application/json");
+                return ApiGatewayUtil.Ok(JsonConvert.SerializeObject(apiResponse), "application/json");
             }
             catch (UserNotFoundException e)
             {
-                return _utils.BadRequest("Sorry, your username or password is incorrect.");
+                return ApiGatewayUtil.BadRequest("Sorry, your username or password is incorrect.");
             }
             catch (CodeMismatchException e)
             {
-                return _utils.BadRequest("The provided code is incorrect. Please try again.");
+                return ApiGatewayUtil.BadRequest("The provided code is incorrect. Please try again.");
             }
             catch (ExpiredCodeException e)
             {
-                return _utils.BadRequest("The provided code has expired. Please request a new one and try again.");
+                return ApiGatewayUtil.BadRequest("The provided code has expired. Please request a new one and try again.");
             }
             catch (NotAuthorizedException e)
             {
-                return _utils.BadRequest("Sorry, your provided details are incorrect. Please try again.");
+                return ApiGatewayUtil.BadRequest("Sorry, your provided details are incorrect. Please try again.");
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "Exception encountered in POST to /api/auth/login");
-                return _utils.ServerError("Sorry, something went wrong logging you in. We'll look into it.");
+                return ApiGatewayUtil.ServerError("Sorry, something went wrong logging you in. We'll look into it.");
             }
         }
 
         public async Task<APIGatewayProxyResponse> LoginWithUsernamePassword(APIGatewayProxyRequest apiRequest)
         {
-            LoginRequest requestBody;
-            try
+            if (!ApiGatewayUtil.TryParseRequest<LoginRequest>(apiRequest, out var requestBody, out var errorResponse))
             {
-                requestBody = JsonConvert.DeserializeObject<LoginRequest>(apiRequest.Body);
-            }
-            catch (Exception ex)
-            {
-                return _utils.BadRequest("Sorry, there was a problem validating the request. Please check parameters and try again.");
+                return errorResponse;
             }
 
             if (string.IsNullOrEmpty(requestBody.Email) || string.IsNullOrEmpty(requestBody.Password))
             {
-                return _utils.BadRequest("Username or Password missing in request. Please check parameters and try again.");
+                return ApiGatewayUtil.BadRequest("Username or Password missing in request. Please check parameters and try again.");
             }
 
             var authReq = new AdminInitiateAuthRequest
@@ -323,19 +291,14 @@ namespace ApiFunction.Services
 
         public async Task<APIGatewayProxyResponse> LoginWithRefreshToken(APIGatewayProxyRequest apiRequest)
         {
-            LoginWithTokenRequest requestBody;
-            try
+            if (!ApiGatewayUtil.TryParseRequest<LoginWithTokenRequest>(apiRequest, out var requestBody, out var errorResponse))
             {
-                requestBody = JsonConvert.DeserializeObject<LoginWithTokenRequest>(apiRequest.Body);
-            }
-            catch (Exception ex)
-            {
-                return _utils.BadRequest("Sorry, there was a problem validating the request. Please check parameters and try again.");
+                return errorResponse;
             }
 
             if (string.IsNullOrEmpty(requestBody.RefreshToken))
             {
-                return _utils.BadRequest("Refresh Token missing in request. Please check parameters and try again.");
+                return ApiGatewayUtil.BadRequest("Refresh Token missing in request. Please check parameters and try again.");
             }
 
             var authReq = new AdminInitiateAuthRequest
@@ -366,7 +329,7 @@ namespace ApiFunction.Services
                         OtpMethod = OtpMethod.Email,
                         SessionToken = clientResponse.Session
                     };
-                    return _utils.Ok(JsonConvert.SerializeObject(otpResponse), "application/json");   
+                    return ApiGatewayUtil.Ok(JsonConvert.SerializeObject(otpResponse), "application/json");   
                 }
                 
                 // Return tokens for Password Login:
@@ -377,24 +340,24 @@ namespace ApiFunction.Services
                     Expiry = clientResponse.AuthenticationResult.ExpiresIn ?? (long)0,
                     RefreshToken = clientResponse.AuthenticationResult.RefreshToken
                 };
-                return _utils.Ok(JsonConvert.SerializeObject(apiResponse), "application/json");
+                return ApiGatewayUtil.Ok(JsonConvert.SerializeObject(apiResponse), "application/json");
             }
             catch (UserNotFoundException e)
             {
-                return _utils.BadRequest("Sorry, your username or password is incorrect.");
+                return ApiGatewayUtil.BadRequest("Sorry, your username or password is incorrect.");
             }
             catch (PasswordResetRequiredException e)
             {
-                return _utils.BadRequest("Sorry, this account is currently locked and requires a password reset.");
+                return ApiGatewayUtil.BadRequest("Sorry, this account is currently locked and requires a password reset.");
             }
             catch (NotAuthorizedException e)
             {
-                return _utils.BadRequest("Sorry, your username or password is incorrect.");
+                return ApiGatewayUtil.BadRequest("Sorry, your username or password is incorrect.");
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "Exception encountered in POST to /api/auth/login");
-                return _utils.ServerError("Sorry, something went wrong logging you in. We'll look into it.");
+                return ApiGatewayUtil.ServerError("Sorry, something went wrong logging you in. We'll look into it.");
             }
         }
     }
