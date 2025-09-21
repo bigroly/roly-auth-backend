@@ -10,7 +10,6 @@ namespace ApiFunction.Interfaces
 {
     public interface ICognitoService
     {
-        Task<APIGatewayProxyResponse> RegisterOtpUser(APIGatewayProxyRequest apiRequest);
         Task<APIGatewayProxyResponse> RegisterUser(APIGatewayProxyRequest apiRequest);
         Task<APIGatewayProxyResponse> InitiateOtpLogin(APIGatewayProxyRequest apiRequest);
         Task<APIGatewayProxyResponse> SubmitEmailOtp(APIGatewayProxyRequest apiRequest);

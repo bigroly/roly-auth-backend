@@ -38,9 +38,6 @@ namespace Lambda.ApiFunction
         {
             if(request.Path == "/account/register" && request.HttpMethod.ToLower() == "post")
                 return await _lambdaEntryPoint.RegisterUser(request);
-            
-            if(request.Path == "/account/otpRegistration" && request.HttpMethod.ToLower() == "post")
-                return await _lambdaEntryPoint.RegisterOtpUser(request);
 
             if (request.Path == "/account/login" && request.HttpMethod.ToLower() == "post")
                 return await _lambdaEntryPoint.LoginWithUsernamePassword(request);

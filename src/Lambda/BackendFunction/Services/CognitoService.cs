@@ -17,7 +17,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ApiFunction.Enums;
-using ApiFunction.Util;
 
 namespace ApiFunction.Services
 {
@@ -34,76 +33,6 @@ namespace ApiFunction.Services
             _cognitoIdp = cognitoIdp;
             _logger = logger;
             _utils = utils;
-        }
-
-        public async Task<APIGatewayProxyResponse> RegisterOtpUser(APIGatewayProxyRequest apiRequest)
-        {
-            OtpRegistrationRequest requestBody;
-            try
-            {
-                requestBody = JsonConvert.DeserializeObject<OtpRegistrationRequest>(apiRequest.Body);
-            }
-            catch (Exception ex)
-            {
-                return _utils.BadRequest("Sorry, there was a problem validating the request. Please check parameters and try again.");
-            }
-            
-            if (string.IsNullOrEmpty(requestBody.Email) || string.IsNullOrEmpty(requestBody.Name))
-            {
-                return _utils.BadRequest("Email or Name missing in request. Please check parameters and try again.");
-            }
-            
-            AdminCreateUserRequest createUserReq = new AdminCreateUserRequest()
-            {
-                UserPoolId = _config.GetValue<string>("cognitoPoolId"),
-                Username = requestBody.Email,
-                UserAttributes = new List<AttributeType>()
-                {
-                    new()
-                    {
-                        Name = "email",
-                        Value = requestBody.Email
-                    },
-                    new()
-                    {
-                        Name = "custom:name",
-                        Value = requestBody.Name
-                    },
-                    new()
-                    {
-                        Name = "email_verified",
-                        Value = "False"
-                    },
-                },
-                DesiredDeliveryMediums = new List<string>() { "EMAIL" },
-                MessageAction = "SUPPRESS"
-            };
-            
-            AdminCreateUserResponse userCreated;
-            try
-            {
-                userCreated = await _cognitoIdp.AdminCreateUserAsync(createUserReq);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error creating User with email: [{requestBody.Email}] - {ex.Message}", ex);
-                return _utils.ServerError("Sorry, something went wrong creating your account. We'll look into it.");
-            }
-            
-            _logger.LogInformation("User created successfully: {user}. User status: {status}", userCreated.User.Username, userCreated.User.UserStatus.ToString());
-            var authReq = new AdminInitiateAuthRequest
-            {
-                UserPoolId = _config.GetValue<string>("cognitoPoolId"),
-                ClientId = _config.GetValue<string>("userPoolClientId"),
-                AuthFlow = AuthFlowType.USER_AUTH,
-                AuthParameters = new Dictionary<string, string>
-                {
-                    { "USERNAME", requestBody.Email },
-                    { "PREFERRED_CHALLENGE", "EMAIL_OTP"}
-                }
-            };
-
-            return await InitiateCognitoAuth(authReq);
         }
 
         public async Task<APIGatewayProxyResponse> RegisterUser(APIGatewayProxyRequest apiRequest)
@@ -123,7 +52,7 @@ namespace ApiFunction.Services
                 return _utils.BadRequest("Username or Password missing in request. Please check parameters and try again.");
             }
 
-            if (!PasswordUtil.Validate(requestBody.Password))
+            if (!PasswordValid(requestBody.Password))
             {
                 return _utils.BadRequest("Invalid password. Please check it meets minimum requirements (at last 6 characters long, contains number, uppercase, lowercase and special character) and try again.");
             }
@@ -132,22 +61,22 @@ namespace ApiFunction.Services
             {
                 UserPoolId = _config.GetValue<string>("cognitoPoolId"),
                 Username = requestBody.Email,
-                // Generate a "different" password to the one that will be set a couple lines down
-                TemporaryPassword = PasswordUtil.GenerateRandomPassword(),
+                // dumb hack to generate a "different" password to the one that will be set a couple lines down
+                TemporaryPassword = $"{requestBody.Password}&1",
                 UserAttributes = new List<AttributeType>()
                 {
-                    new()
+                    new AttributeType
                     {
                         Name = "email",
                         Value = requestBody.Email
                     },
                     // todo - at some point would be cool to explore email verification
-                    new()
+                    new AttributeType
                     {
                         Name = "email_verified",
                         Value = "True"
                     },
-                    new()
+                    new AttributeType
                     {
                         Name = "custom:name",
                         Value = requestBody.Name
@@ -396,6 +325,27 @@ namespace ApiFunction.Services
                 _logger.LogError(e, "Exception encountered in POST to /api/auth/login");
                 return _utils.ServerError("Sorry, something went wrong logging you in. We'll look into it.");
             }
+        }
+
+        private bool PasswordValid(string password)
+        {
+            if (password.Length < 6)
+                return false;
+
+            if (!Regex.IsMatch(password, @"[$^*.\[\]{}()?\-""!@#%&/\\,><':;|_~`=+]+"))
+                return false;
+
+            if (!Regex.IsMatch(password, @"[A-Z]"))
+                return false;
+
+            if (!Regex.IsMatch(password, @"[a-z]"))
+                return false;
+
+            if (!Regex.IsMatch(password, @"\d"))
+                return false;
+
+            return true;
+
         }
     }
 }
