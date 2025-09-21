@@ -24,6 +24,11 @@ namespace ApiFunction
             _passwordRecoveryService = passwordRecoveryService;
         }
 
+        public async Task<APIGatewayProxyResponse> RegisterOtpUser(APIGatewayProxyRequest request)
+        {
+            return await _cognitoService.RegisterOtpUser(request);
+        }
+
         public async Task<APIGatewayProxyResponse> RegisterUser(APIGatewayProxyRequest request)
         {
             return await _cognitoService.RegisterUser(request);

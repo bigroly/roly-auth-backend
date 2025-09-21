@@ -160,12 +160,16 @@ namespace RolyAuth
                 AuthorizationType = AuthorizationType.COGNITO
             };
 
-            // Auth endpoints
+            // Auth endpoints root
             var authController = apiGateway.Root.AddResource("account");
             
+            // Registration endpoints
             var registerEndpoint = authController.AddResource("register", corsAnyOrigin);
             registerEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
-
+            var otpRegisterEndpoint = authController.AddResource("otpRegistration", corsAnyOrigin);
+            otpRegisterEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
+            
+            // Login endpoints
             var loginEndpoint = authController.AddResource("login", corsAnyOrigin);
             loginEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
             var loginWithTokenEndpoint = loginEndpoint.AddResource("token", corsAnyOrigin);
