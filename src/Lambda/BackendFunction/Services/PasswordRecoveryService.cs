@@ -3,6 +3,7 @@ using Amazon.CognitoIdentityProvider.Model;
 using Amazon.Lambda.APIGatewayEvents;
 using ApiFunction.Interfaces;
 using ApiFunction.Models;
+using ApiFunction.Util;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -14,14 +15,12 @@ namespace ApiFunction.Services
         private readonly IConfiguration _config;
         private readonly IAmazonCognitoIdentityProvider _cognitoIdp;
         private readonly ILogger<CognitoService> _logger;
-        private readonly IUtilities _utils;
 
-        public PasswordRecoveryService(IConfiguration config, IAmazonCognitoIdentityProvider cognitoIdp, ILogger<CognitoService> logger, IUtilities utils)
+        public PasswordRecoveryService(IConfiguration config, IAmazonCognitoIdentityProvider cognitoIdp, ILogger<CognitoService> logger)
         {
             _config = config;
             _cognitoIdp = cognitoIdp;
             _logger = logger;
-            _utils = utils;
         }
 
         public async Task<APIGatewayProxyResponse> BeginPasswordRecovery(APIGatewayProxyRequest apiRequest)
@@ -33,12 +32,12 @@ namespace ApiFunction.Services
             }
             catch (Exception ex)
             {
-                return _utils.BadRequest("Sorry, there was a problem validating the request. Please check parameters and try again.");
+                return ApiGatewayUtil.BadRequest("Sorry, there was a problem validating the request. Please check parameters and try again.");
             }
 
             if (string.IsNullOrEmpty(request.Email))
             {
-                return _utils.BadRequest("Email address missing from request. Please provide this and try agin.");
+                return ApiGatewayUtil.BadRequest("Email address missing from request. Please provide this and try agin.");
             }            
 
             try
@@ -50,12 +49,12 @@ namespace ApiFunction.Services
                 };
 
                 var idpResponse = await _cognitoIdp.ForgotPasswordAsync(idpRequest);
-                return _utils.Ok(null, null);
+                return ApiGatewayUtil.Ok(null, null);
             }
             catch(Exception ex)
             {
                 _logger.LogError(ex, $"Error calling Cognito ForgotPasswordAsync for user with email:[{request.Email}]");
-                return _utils.ServerError("Sorry, there was an issue trying to begin resetting your password.");
+                return ApiGatewayUtil.ServerError("Sorry, there was an issue trying to begin resetting your password.");
             }           
         }
 
@@ -68,12 +67,12 @@ namespace ApiFunction.Services
             }
             catch (Exception ex)
             {
-                return _utils.BadRequest("Sorry, there was a problem validating the request. Please check parameters and try again.");
+                return ApiGatewayUtil.BadRequest("Sorry, there was a problem validating the request. Please check parameters and try again.");
             }
 
             if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.ConfirmationCode) || string.IsNullOrEmpty(request.NewPassword))
             {
-                return _utils.BadRequest("Email, Confirmation Code or New Password missing from request. Please provide this and try agin.");
+                return ApiGatewayUtil.BadRequest("Email, Confirmation Code or New Password missing from request. Please provide this and try agin.");
             }
 
             try
@@ -90,15 +89,15 @@ namespace ApiFunction.Services
 
                 if(idpResponse.HttpStatusCode != System.Net.HttpStatusCode.OK)
                 {
-                    return _utils.BadRequest("There was an issue with the provided password or reset code. Please check these and try again");
+                    return ApiGatewayUtil.BadRequest("There was an issue with the provided password or reset code. Please check these and try again");
                 }
 
-                return _utils.Ok(null, null);               
+                return ApiGatewayUtil.Ok(null, null);               
             }
             catch(Exception ex)
             {
                 _logger.LogError(ex, $"Error calling Cognito ConfirmForgotPasswordAsync for user with email:[{request.Email}]");
-                return _utils.BadRequest(ex.Message);
+                return ApiGatewayUtil.BadRequest(ex.Message);
             }
         }
     }

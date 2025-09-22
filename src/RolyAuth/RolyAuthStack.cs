@@ -111,7 +111,8 @@ namespace RolyAuth
                     "cognito-idp:AdminSetUserPassword",
                     "cognito-idp:AdminInitiateAuth",
                     "cognito-idp:ConfirmForgotPassword",
-                    "cognito-idp:AdminRespondToAuthChallenge"
+                    "cognito-idp:AdminRespondToAuthChallenge",
+                    "cognito-idp:AdminUpdateUserAttributes",
                 },
                 Resources = new[] { "*" },
                 Effect = Effect.ALLOW
