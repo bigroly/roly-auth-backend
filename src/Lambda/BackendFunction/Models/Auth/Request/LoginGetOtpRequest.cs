@@ -1,6 +1,9 @@
+using ApiFunction.Enums;
+
 namespace ApiFunction.Models.Auth.Request;
 
 public record LoginGetOtpRequest
 {
-    public string Email { get; set; }
+    public OtpMethod OtpMedium { get; set; }
+    public string Target { get; set; }
 }

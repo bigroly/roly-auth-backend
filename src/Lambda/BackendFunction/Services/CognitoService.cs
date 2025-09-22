@@ -177,9 +177,15 @@ namespace ApiFunction.Services
                 return errorResponse;
             }
 
-            if (string.IsNullOrEmpty(requestBody?.Email))
+            // Todo: SMS OTP with pinpoint at some point in time.
+            if (requestBody.OtpMedium is OtpMethod.Sms)
             {
-                return ApiGatewayUtil.BadRequest("Email missing in request. Please check parameters and try again.");
+                return ApiGatewayUtil.BadRequest("SMS OTP not yet supported. Please try again with Email OTP.");
+            }
+
+            if (string.IsNullOrEmpty(requestBody?.Target))
+            {
+                return ApiGatewayUtil.BadRequest("Target missing in request. Please check parameters and try again.");
             }
             
             var authReq = new AdminInitiateAuthRequest
@@ -189,7 +195,7 @@ namespace ApiFunction.Services
                 AuthFlow = AuthFlowType.USER_AUTH,
                 AuthParameters = new Dictionary<string, string>
                 {
-                    { "USERNAME", requestBody.Email },
+                    { "USERNAME", requestBody.Target },
                     { "PREFERRED_CHALLENGE", "EMAIL_OTP"}
                 }
             };
