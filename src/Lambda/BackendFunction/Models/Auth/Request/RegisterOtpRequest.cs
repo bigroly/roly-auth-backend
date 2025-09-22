@@ -1,6 +1,6 @@
-namespace ApiFunction.Models;
+namespace ApiFunction.Models.Auth.Request;
 
-public record OtpRegistrationRequest
+public record RegisterOtpRequest
 {
     public string Email { get; set; }
     public string Name { get; set; }

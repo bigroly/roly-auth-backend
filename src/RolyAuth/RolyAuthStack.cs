@@ -169,8 +169,6 @@ namespace RolyAuth
             registerEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
             var otpRegisterEndpoint = authController.AddResource("otpRegistration", corsAnyOrigin);
             otpRegisterEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
-            var otpConfirmationEndpoint = authController.AddResource("otpConfirmation", corsAnyOrigin);
-            otpConfirmationEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
             
             
             // Login endpoints

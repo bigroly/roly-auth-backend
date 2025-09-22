@@ -1,8 +1,8 @@
 using ApiFunction.Enums;
 
-namespace ApiFunction.Models;
+namespace ApiFunction.Models.Auth.Response;
 
-public record InitiateOtpResponse
+public record LoginGetOtpResponse
 {
     public OtpMethod OtpMethod { get; init; }
     public string SessionToken { get; init; }

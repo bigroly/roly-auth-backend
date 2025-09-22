@@ -7,6 +7,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using ApiFunction.Enums;
+using ApiFunction.Models.Auth.Request;
+using ApiFunction.Models.Auth.Response;
 using ApiFunction.Util;
 
 namespace ApiFunction.Services
@@ -26,7 +28,7 @@ namespace ApiFunction.Services
 
         public async Task<APIGatewayProxyResponse> RegisterOtpUser(APIGatewayProxyRequest apiRequest)
         {
-            if (!ApiGatewayUtil.TryParseRequest<OtpRegistrationRequest>(apiRequest, out var requestBody, out var errorResponse))
+            if (!ApiGatewayUtil.TryParseRequest<RegisterOtpRequest>(apiRequest, out var requestBody, out var errorResponse))
             {
                 return errorResponse;
             }
@@ -89,73 +91,9 @@ namespace ApiFunction.Services
             return await InitiateCognitoAuth(authReq);
         }
 
-        public async Task<APIGatewayProxyResponse> ConfirmOtpUser(APIGatewayProxyRequest apiRequest)
-        {
-            if (!ApiGatewayUtil.TryParseRequest<SubmitOtpRequest>(apiRequest, out var requestBody, out var errorResponse))
-            {
-                return errorResponse;
-            }
-            
-            try
-            {
-                var clientResponse = await SubmitOtp(requestBody.Email, requestBody.SessionToken, requestBody.Code);
-
-                if (clientResponse.AuthenticationResult == null)
-                {
-                    return ApiGatewayUtil.BadRequest("Sorry, your provided details are incorrect. Please try again.");
-                }
-
-                var updateUser = new AdminUpdateUserAttributesRequest()
-                {
-                    Username = requestBody.Email,
-                    UserPoolId = _config.GetValue<string>("cognitoPoolId"),
-                    UserAttributes = new List<AttributeType>()
-                    {
-                        new()
-                        {
-                            Name = "email_verified",
-                            Value = "True"
-                        }
-                    }
-                };
-                
-                var updateComplete = await _cognitoIdp.AdminUpdateUserAttributesAsync(updateUser);
-                
-                var apiResponse = new LoginResponse
-                {
-                    IdToken = clientResponse.AuthenticationResult.IdToken,
-                    AccessToken = clientResponse.AuthenticationResult.AccessToken,
-                    Expiry = clientResponse.AuthenticationResult.ExpiresIn ?? (long)0,
-                    RefreshToken = clientResponse.AuthenticationResult.RefreshToken
-                };
-                return ApiGatewayUtil.Ok(JsonConvert.SerializeObject(apiResponse), "application/json");
-            }
-            catch (UserNotFoundException e)
-            {
-                return ApiGatewayUtil.BadRequest("Sorry, your username or password is incorrect.");
-            }
-            catch (CodeMismatchException e)
-            {
-                return ApiGatewayUtil.BadRequest("The provided code is incorrect. Please try again.");
-            }
-            catch (ExpiredCodeException e)
-            {
-                return ApiGatewayUtil.BadRequest("The provided code has expired. Please request a new one and try again.");
-            }
-            catch (NotAuthorizedException e)
-            {
-                return ApiGatewayUtil.BadRequest("Sorry, your provided details are incorrect. Please try again.");
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Exception encountered in POST to /api/auth/login");
-                return ApiGatewayUtil.ServerError("Sorry, something went wrong logging you in. We'll look into it.");
-            }
-        }
-
         public async Task<APIGatewayProxyResponse> RegisterUser(APIGatewayProxyRequest apiRequest)
         {
-            if (!ApiGatewayUtil.TryParseRequest<RegistrationRequest>(apiRequest, out var requestBody, out var errorResponse))
+            if (!ApiGatewayUtil.TryParseRequest<RegisterUsernamePasswordRequest>(apiRequest, out var requestBody, out var errorResponse))
             {
                 return errorResponse;
             }
@@ -234,7 +172,7 @@ namespace ApiFunction.Services
 
         public async Task<APIGatewayProxyResponse> InitiateOtpLogin(APIGatewayProxyRequest apiRequest)
         {
-            if (!ApiGatewayUtil.TryParseRequest<EmailOtpRequest>(apiRequest, out var requestBody, out var errorResponse))
+            if (!ApiGatewayUtil.TryParseRequest<LoginGetOtpRequest>(apiRequest, out var requestBody, out var errorResponse))
             {
                 return errorResponse;
             }
@@ -261,7 +199,7 @@ namespace ApiFunction.Services
         
         public async Task<APIGatewayProxyResponse> SubmitEmailOtp(APIGatewayProxyRequest apiRequest)
         {
-            if (!ApiGatewayUtil.TryParseRequest<SubmitOtpRequest>(apiRequest, out var requestBody, out var errorResponse))
+            if (!ApiGatewayUtil.TryParseRequest<LoginSubmitOtpRequest>(apiRequest, out var requestBody, out var errorResponse))
             {
                 return errorResponse;
             }
@@ -308,7 +246,7 @@ namespace ApiFunction.Services
 
         public async Task<APIGatewayProxyResponse> LoginWithUsernamePassword(APIGatewayProxyRequest apiRequest)
         {
-            if (!ApiGatewayUtil.TryParseRequest<LoginRequest>(apiRequest, out var requestBody, out var errorResponse))
+            if (!ApiGatewayUtil.TryParseRequest<LoginUsernamePasswordRequest>(apiRequest, out var requestBody, out var errorResponse))
             {
                 return errorResponse;
             }
@@ -335,7 +273,7 @@ namespace ApiFunction.Services
 
         public async Task<APIGatewayProxyResponse> LoginWithRefreshToken(APIGatewayProxyRequest apiRequest)
         {
-            if (!ApiGatewayUtil.TryParseRequest<LoginWithTokenRequest>(apiRequest, out var requestBody, out var errorResponse))
+            if (!ApiGatewayUtil.TryParseRequest<LoginRefreshTokenRequest>(apiRequest, out var requestBody, out var errorResponse))
             {
                 return errorResponse;
             }
@@ -386,7 +324,7 @@ namespace ApiFunction.Services
                 // OTP login initaited - return different model:
                 if (request.AuthParameters.Any(a => a.Key == "PREFERRED_CHALLENGE"))
                 {
-                    var otpResponse = new InitiateOtpResponse()
+                    var otpResponse = new LoginGetOtpResponse()
                     {
                         OtpMethod = OtpMethod.Email,
                         SessionToken = clientResponse.Session

@@ -3,6 +3,7 @@ using Amazon.CognitoIdentityProvider.Model;
 using Amazon.Lambda.APIGatewayEvents;
 using ApiFunction.Interfaces;
 using ApiFunction.Models;
+using ApiFunction.Models.Auth.Request;
 using ApiFunction.Util;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -25,10 +26,10 @@ namespace ApiFunction.Services
 
         public async Task<APIGatewayProxyResponse> BeginPasswordRecovery(APIGatewayProxyRequest apiRequest)
         {
-            BeginPwResetRequest request;
+            PwResetBeginRequest request;
             try
             {
-                request = JsonConvert.DeserializeObject<BeginPwResetRequest>(apiRequest.Body);
+                request = JsonConvert.DeserializeObject<PwResetBeginRequest>(apiRequest.Body);
             }
             catch (Exception ex)
             {
@@ -60,10 +61,10 @@ namespace ApiFunction.Services
 
         public async Task<APIGatewayProxyResponse> ConfirmAndResetPassword(APIGatewayProxyRequest apiRequest)
         {
-            ConfirmPasswordResetRequest request;
+            PwResetConfirmRequest request;
             try
             {
-                request = JsonConvert.DeserializeObject<ConfirmPasswordResetRequest>(apiRequest.Body);
+                request = JsonConvert.DeserializeObject<PwResetConfirmRequest>(apiRequest.Body);
             }
             catch (Exception ex)
             {

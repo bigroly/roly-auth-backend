@@ -11,6 +11,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ApiFunction.Models.App;
+using ApiFunction.Models.App.Response;
 using ApiFunction.Util;
 
 namespace ApiFunction.Services
