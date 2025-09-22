@@ -11,21 +11,22 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ApiFunction.Models.App;
+using ApiFunction.Models.App.Response;
+using ApiFunction.Util;
 
 namespace ApiFunction.Services
 {
     public class AppsService: IAppsService
     {
-        private readonly IUtilities _utils;
         private readonly IDynamoDBContext _dynamoDbContext;
         private readonly ILogger<AppsService> _logger;
 
         private DynamoDBOperationConfig _tableConfig;
         private JwtSecurityTokenHandler _jwtReader;
 
-        public AppsService(IConfiguration config, IUtilities utils, IDynamoDBContext dynamoDbContext, ILogger<AppsService> logger)
+        public AppsService(IConfiguration config, IDynamoDBContext dynamoDbContext, ILogger<AppsService> logger)
         {
-            _utils = utils;
             _dynamoDbContext = dynamoDbContext;
             _logger = logger;
 
@@ -69,7 +70,7 @@ namespace ApiFunction.Services
                 Apps = allowedApps.OrderBy(a => a.AppName).ToList(),
             };
 
-            return _utils.Ok(JsonConvert.SerializeObject(appsResponse), "application/json");
+            return ApiGatewayUtil.Ok(JsonConvert.SerializeObject(appsResponse), "application/json");
         }
     }
 }

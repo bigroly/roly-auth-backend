@@ -111,7 +111,8 @@ namespace RolyAuth
                     "cognito-idp:AdminSetUserPassword",
                     "cognito-idp:AdminInitiateAuth",
                     "cognito-idp:ConfirmForgotPassword",
-                    "cognito-idp:AdminRespondToAuthChallenge"
+                    "cognito-idp:AdminRespondToAuthChallenge",
+                    "cognito-idp:AdminUpdateUserAttributes",
                 },
                 Resources = new[] { "*" },
                 Effect = Effect.ALLOW
@@ -160,12 +161,17 @@ namespace RolyAuth
                 AuthorizationType = AuthorizationType.COGNITO
             };
 
-            // Auth endpoints
+            // Auth endpoints root
             var authController = apiGateway.Root.AddResource("account");
             
+            // Registration endpoints
             var registerEndpoint = authController.AddResource("register", corsAnyOrigin);
             registerEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
-
+            var otpRegisterEndpoint = authController.AddResource("otpRegistration", corsAnyOrigin);
+            otpRegisterEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
+            
+            
+            // Login endpoints
             var loginEndpoint = authController.AddResource("login", corsAnyOrigin);
             loginEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
             var loginWithTokenEndpoint = loginEndpoint.AddResource("token", corsAnyOrigin);
@@ -175,16 +181,19 @@ namespace RolyAuth
             var submitEmailOtpEndpoint = loginEndpoint.AddResource("submitEmailOtp", corsAnyOrigin);
             submitEmailOtpEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
             
+            
+            // Password reset endpoints
             var beginPwResetEndpoint = authController.AddResource("forgotPassword", corsLimitedOrigins);
             beginPwResetEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
-
             var confirmPwResetEndpoint = authController.AddResource("resetPassword", corsLimitedOrigins);
             confirmPwResetEndpoint.AddMethod("POST", new LambdaIntegration(backendLambdaFunc), new MethodOptions { AuthorizationType = AuthorizationType.NONE });
 
+            
             // Apps endpoints
             var appsController = apiGateway.Root.AddResource("apps", corsLimitedOrigins);
             appsController.AddMethod("GET", new LambdaIntegration(backendLambdaFunc), authorizedMethodOptions);
 
+            
             // Apps table
             var appsTableName = "rolyauth-apps";
             var appsTable = new Table(this, appsTableName, new TableProps
