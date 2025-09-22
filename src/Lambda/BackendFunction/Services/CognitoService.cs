@@ -89,10 +89,69 @@ namespace ApiFunction.Services
             return await InitiateCognitoAuth(authReq);
         }
 
-        // public async Task<APIGatewayProxyResponse> ConfirmOtpUser(APIGatewayProxyRequest apiRequest)
-        // {
-        //     
-        // }
+        public async Task<APIGatewayProxyResponse> ConfirmOtpUser(APIGatewayProxyRequest apiRequest)
+        {
+            if (!ApiGatewayUtil.TryParseRequest<SubmitOtpRequest>(apiRequest, out var requestBody, out var errorResponse))
+            {
+                return errorResponse;
+            }
+            
+            try
+            {
+                var clientResponse = await SubmitOtp(requestBody.Email, requestBody.SessionToken, requestBody.Code);
+
+                if (clientResponse.AuthenticationResult == null)
+                {
+                    return ApiGatewayUtil.BadRequest("Sorry, your provided details are incorrect. Please try again.");
+                }
+
+                var updateUser = new AdminUpdateUserAttributesRequest()
+                {
+                    Username = requestBody.Email,
+                    UserPoolId = _config.GetValue<string>("cognitoPoolId"),
+                    UserAttributes = new List<AttributeType>()
+                    {
+                        new()
+                        {
+                            Name = "email_verified",
+                            Value = "True"
+                        }
+                    }
+                };
+                
+                var updateComplete = await _cognitoIdp.AdminUpdateUserAttributesAsync(updateUser);
+                
+                var apiResponse = new LoginResponse
+                {
+                    IdToken = clientResponse.AuthenticationResult.IdToken,
+                    AccessToken = clientResponse.AuthenticationResult.AccessToken,
+                    Expiry = clientResponse.AuthenticationResult.ExpiresIn ?? (long)0,
+                    RefreshToken = clientResponse.AuthenticationResult.RefreshToken
+                };
+                return ApiGatewayUtil.Ok(JsonConvert.SerializeObject(apiResponse), "application/json");
+            }
+            catch (UserNotFoundException e)
+            {
+                return ApiGatewayUtil.BadRequest("Sorry, your username or password is incorrect.");
+            }
+            catch (CodeMismatchException e)
+            {
+                return ApiGatewayUtil.BadRequest("The provided code is incorrect. Please try again.");
+            }
+            catch (ExpiredCodeException e)
+            {
+                return ApiGatewayUtil.BadRequest("The provided code has expired. Please request a new one and try again.");
+            }
+            catch (NotAuthorizedException e)
+            {
+                return ApiGatewayUtil.BadRequest("Sorry, your provided details are incorrect. Please try again.");
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Exception encountered in POST to /api/auth/login");
+                return ApiGatewayUtil.ServerError("Sorry, something went wrong logging you in. We'll look into it.");
+            }
+        }
 
         public async Task<APIGatewayProxyResponse> RegisterUser(APIGatewayProxyRequest apiRequest)
         {
@@ -199,7 +258,7 @@ namespace ApiFunction.Services
 
             return await InitiateCognitoAuth(authReq);
         }
-
+        
         public async Task<APIGatewayProxyResponse> SubmitEmailOtp(APIGatewayProxyRequest apiRequest)
         {
             if (!ApiGatewayUtil.TryParseRequest<SubmitOtpRequest>(apiRequest, out var requestBody, out var errorResponse))
@@ -212,24 +271,9 @@ namespace ApiFunction.Services
                 return ApiGatewayUtil.BadRequest("OTP missing in request. Please check parameters and try again.");
             }
 
-            var cognitoRequest = new AdminRespondToAuthChallengeRequest()
-            {
-                ChallengeName = ChallengeNameType.EMAIL_OTP,
-                Session = requestBody.SessionToken,
-                ChallengeResponses = new Dictionary<string, string>()
-                {
-                    { "USERNAME" , requestBody.Email },
-                    { "EMAIL_OTP_CODE", requestBody.Code }
-                },
-                ClientId = _config.GetValue<string>("userPoolClientId"),
-                UserPoolId = _config.GetValue<string>("cognitoPoolId")
-            };
-
             try
             {
-                var clientResponse = await _cognitoIdp.AdminRespondToAuthChallengeAsync(cognitoRequest);
-
-                // Return tokens for Password Login:
+                var clientResponse = await SubmitOtp(requestBody.Email, requestBody.SessionToken, requestBody.Code);
                 var apiResponse = new LoginResponse
                 {
                     IdToken = clientResponse.AuthenticationResult.IdToken,
@@ -313,6 +357,24 @@ namespace ApiFunction.Services
             };
 
             return await InitiateCognitoAuth(authReq);
+        }
+        
+        private async Task<AdminRespondToAuthChallengeResponse> SubmitOtp(string email, string sessionToken, string otpCode)
+        {
+            var cognitoRequest = new AdminRespondToAuthChallengeRequest()
+            {
+                ChallengeName = ChallengeNameType.EMAIL_OTP,
+                Session = sessionToken,
+                ChallengeResponses = new Dictionary<string, string>()
+                {
+                    { "USERNAME" , email },
+                    { "EMAIL_OTP_CODE", otpCode }
+                },
+                ClientId = _config.GetValue<string>("userPoolClientId"),
+                UserPoolId = _config.GetValue<string>("cognitoPoolId")
+            };
+            
+            return await _cognitoIdp.AdminRespondToAuthChallengeAsync(cognitoRequest);
         }
 
         private async Task<APIGatewayProxyResponse> InitiateCognitoAuth(AdminInitiateAuthRequest request)
