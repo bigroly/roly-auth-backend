@@ -30,4 +30,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.9.0" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Libs\RolyAuthCommon\RolyAuthCommon.csproj" />
+  </ItemGroup>
 </Project>

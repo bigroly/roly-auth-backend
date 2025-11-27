@@ -1,21 +1,15 @@
-﻿using Amazon.DynamoDBv2.DataModel;
+﻿using System.IdentityModel.Tokens.Jwt;
+using Amazon.DynamoDBv2.DataModel;
 using Amazon.Lambda.APIGatewayEvents;
-using ApiFunction.Interfaces;
-using ApiFunction.Models;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using ApiFunction.Models.App;
 using ApiFunction.Models.App.Response;
 using ApiFunction.Util;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using RolyAuthCommon.Interfaces;
 
-namespace ApiFunction.Services
+namespace RolyAuthCommon.Services
 {
     public class AppsService: IAppsService
     {
@@ -32,18 +26,14 @@ namespace ApiFunction.Services
 
             _tableConfig = new DynamoDBOperationConfig()
             {
-                OverrideTableName = config.GetValue<string>("appsTableName")
+                OverrideTableName = config["appsTableName"]
             };
             
             _jwtReader = new JwtSecurityTokenHandler();
         }
 
-        public async Task<APIGatewayProxyResponse> GetApplications(APIGatewayProxyRequest request)
+        public async Task<List<ApplicationModel>> GetUserApps(string userEmail)
         {
-            var jwtEncoded = request.Headers.Where(h => h.Key == "Authorization").FirstOrDefault().Value.Split(" ")[1];
-            var token = _jwtReader.ReadJwtToken(jwtEncoded);
-            var userEmail = token.Claims.Where(c => c.Type == "email").FirstOrDefault()?.Value;
-
             var allowedApps = new List<ApplicationModel>();
             var allApps = await _dynamoDbContext.ScanAsync<ApplicationModel>(new List<ScanCondition>(), _tableConfig).GetRemainingAsync();
 
@@ -64,6 +54,17 @@ namespace ApiFunction.Services
                     }
                 }
             }
+            
+            return allowedApps;
+        }
+
+        public async Task<APIGatewayProxyResponse> GetApplications(APIGatewayProxyRequest request)
+        {
+            var jwtEncoded = request.Headers.FirstOrDefault(h => h.Key == "Authorization").Value.Split(" ")[1];
+            var token = _jwtReader.ReadJwtToken(jwtEncoded);
+            var userEmail = token.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
+
+            var allowedApps = await GetUserApps(userEmail);
 
             var appsResponse = new GetAppsResponse
             {

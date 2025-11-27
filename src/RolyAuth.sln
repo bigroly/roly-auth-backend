@@ -16,6 +16,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PreTokenGenerationFunction", "Lambda\PreTokenGenerationFunction\src\PreTokenGenerationFunction\PreTokenGenerationFunction.csproj", "{829CC665-1273-49FD-B7E3-39ED638C97CA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libs", "Libs", "{7D7737FF-A98A-4BF2-8A32-2E2CFABA1983}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RolyAuthCommon", "Libs\RolyAuthCommon\RolyAuthCommon.csproj", "{867E7D92-F0C3-4196-9C40-9F4E1E0FA5D9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -50,12 +56,38 @@ Global
 		{A28258A5-54F6-42C2-AD05-8D16E537DAF0}.Release|x64.Build.0 = Release|Any CPU
 		{A28258A5-54F6-42C2-AD05-8D16E537DAF0}.Release|x86.ActiveCfg = Release|Any CPU
 		{A28258A5-54F6-42C2-AD05-8D16E537DAF0}.Release|x86.Build.0 = Release|Any CPU
+		{829CC665-1273-49FD-B7E3-39ED638C97CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{829CC665-1273-49FD-B7E3-39ED638C97CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{829CC665-1273-49FD-B7E3-39ED638C97CA}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{829CC665-1273-49FD-B7E3-39ED638C97CA}.Debug|x64.Build.0 = Debug|Any CPU
+		{829CC665-1273-49FD-B7E3-39ED638C97CA}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{829CC665-1273-49FD-B7E3-39ED638C97CA}.Debug|x86.Build.0 = Debug|Any CPU
+		{829CC665-1273-49FD-B7E3-39ED638C97CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{829CC665-1273-49FD-B7E3-39ED638C97CA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{829CC665-1273-49FD-B7E3-39ED638C97CA}.Release|x64.ActiveCfg = Release|Any CPU
+		{829CC665-1273-49FD-B7E3-39ED638C97CA}.Release|x64.Build.0 = Release|Any CPU
+		{829CC665-1273-49FD-B7E3-39ED638C97CA}.Release|x86.ActiveCfg = Release|Any CPU
+		{829CC665-1273-49FD-B7E3-39ED638C97CA}.Release|x86.Build.0 = Release|Any CPU
+		{867E7D92-F0C3-4196-9C40-9F4E1E0FA5D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{867E7D92-F0C3-4196-9C40-9F4E1E0FA5D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{867E7D92-F0C3-4196-9C40-9F4E1E0FA5D9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{867E7D92-F0C3-4196-9C40-9F4E1E0FA5D9}.Debug|x64.Build.0 = Debug|Any CPU
+		{867E7D92-F0C3-4196-9C40-9F4E1E0FA5D9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{867E7D92-F0C3-4196-9C40-9F4E1E0FA5D9}.Debug|x86.Build.0 = Debug|Any CPU
+		{867E7D92-F0C3-4196-9C40-9F4E1E0FA5D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{867E7D92-F0C3-4196-9C40-9F4E1E0FA5D9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{867E7D92-F0C3-4196-9C40-9F4E1E0FA5D9}.Release|x64.ActiveCfg = Release|Any CPU
+		{867E7D92-F0C3-4196-9C40-9F4E1E0FA5D9}.Release|x64.Build.0 = Release|Any CPU
+		{867E7D92-F0C3-4196-9C40-9F4E1E0FA5D9}.Release|x86.ActiveCfg = Release|Any CPU
+		{867E7D92-F0C3-4196-9C40-9F4E1E0FA5D9}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{A28258A5-54F6-42C2-AD05-8D16E537DAF0} = {7FE811F2-411E-4FE8-A1B0-1EBFA8A940A3}
+		{829CC665-1273-49FD-B7E3-39ED638C97CA} = {7FE811F2-411E-4FE8-A1B0-1EBFA8A940A3}
+		{867E7D92-F0C3-4196-9C40-9F4E1E0FA5D9} = {7D7737FF-A98A-4BF2-8A32-2E2CFABA1983}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5842D8CC-6C2F-449C-9114-B4649C80C8FC}

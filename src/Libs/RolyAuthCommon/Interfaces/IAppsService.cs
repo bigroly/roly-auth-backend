@@ -1,14 +1,11 @@
 ﻿using Amazon.Lambda.APIGatewayEvents;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using ApiFunction.Models.App;
 
-namespace ApiFunction.Interfaces
+namespace RolyAuthCommon.Interfaces
 {
     public interface IAppsService
     {
+        Task<List<ApplicationModel>> GetUserApps(string userEmail);
         Task<APIGatewayProxyResponse> GetApplications(APIGatewayProxyRequest request);
     }
 }

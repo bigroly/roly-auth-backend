@@ -51,6 +51,7 @@ namespace RolyAuth
                 },
                 Mfa = Mfa.OPTIONAL,
                 MfaMessage = "Your RolyApps Login Code is {####}. Please enter this code on the website where prompted and do NOT share this code with anyone.",
+                //LambdaTriggers = 
             });
 
             // Cognito user group
